@@ -1,0 +1,7 @@
+{
+    "page": 1,
+    "items": [
+        {"id": 101, "name": "Item 101"},
+        {"id": 102, "name": "Item 102"}
+    ]
+}
