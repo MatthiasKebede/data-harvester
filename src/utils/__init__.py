@@ -1,1 +1,0 @@
-# This package contains utility modules for the Data Harvester application.

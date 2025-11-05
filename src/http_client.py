@@ -1,78 +1,113 @@
+"""
+HTTP Client module for making API requests
+"""
+
 import requests
-from typing import Any, Dict, Iterable, Optional
-from src.config import Config
+from typing import Dict, Any, Optional, List
+import json
 
-BASE_URL = Config.BASE_URL
-DEFAULT_TIMEOUT = Config.TIMEOUT
-DEFAULT_HEADERS = Config.HEADERS
-CHUNK_SIZE = Config.STREAM_CHUNK_SIZE
 
-def get_json(
-        url: str,
-        params: Optional[Dict[str, any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: float = DEFAULT_TIMEOUT
-    ) -> Dict[str, Any]:
-    response = requests.get(url=url, params=params, headers=headers, timeout=timeout)
-    response.raise_for_status()
-    return response.json()
+class HTTPClient:
+    """
+    A client for making HTTP requests to APIs. Handles GET and POST requests with error handling.
+    """
 
-def get_stream(
-        url: str,
-        headers: Optional[Dict[str, str]] = None,
-        timeout: float = DEFAULT_TIMEOUT
-    ) -> Iterable[bytes]:
-    response = requests.get(url=url, headers=headers, timeout=timeout, stream=True)
-    response.raise_for_status()
-    return response.iter_content(chunk_size=CHUNK_SIZE)
+    def __init__(self, base_url: str = "", timeout: int = 30):
+        """
+        Initialize the HTTP client
 
-class Client:
-    def __init__(
-            self,
-            base_url: str = BASE_URL,
-            headers: Optional[Dict[str, str]] = None,
-            timeout: float = DEFAULT_TIMEOUT
-        ) -> None:
-        self.base_url = base_url.rstrip("/")
-        self.headers = {**DEFAULT_HEADERS, **(headers or {})}
+        Args:
+            base_url: Base URL for API requests
+            timeout: Request timeout in seconds
+        """
+        self.base_url = base_url
         self.timeout = timeout
         self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'DataHarvester/1.0',
+            'Accept': 'application/json'
+        })
 
-    def close(self) -> None:
-        self.session.close()
+    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Make a GET request to the specified endpoint
 
-    def _url(self, url: str) -> str:
-        return url if url.startswith("http") else f"{self.base_url}/{url.lstrip('/')}"
+        Args:
+            endpoint: API endpoint path
+            params: Query parameters
 
-    # def get(self, endpoint, params=None):
-    #     url = f"{self.base_url}/{endpoint}"
-    #     response = self.session.get(url, params=params, timeout=self.timeout)
-    #     response.raise_for_status()
-    #     return response.json()
+        Returns:
+            JSON response as dictionary
 
-    def get_json(
-            self,
-            url: str,
-            params: Optional[Dict[str, any]] = None,
-            headers: Optional[Dict[str, str]] = None,
-            timeout: float = DEFAULT_TIMEOUT
-        ) -> Dict[str, Any]:
-        response = self.session.get(url=url, params=params, headers=headers, timeout=timeout)
+        Raises:
+            requests.exceptions.RequestException: If request fails
+        """
+        url = self._build_url(endpoint)
+        response = self.session.get(url, params=params, timeout=self.timeout)
         response.raise_for_status()
         return response.json()
 
-    def get_stream(
-            self,
-            url: str,
-            headers: Optional[Dict[str, str]] = None,
-            timeout: float = DEFAULT_TIMEOUT
-        ) -> Iterable[bytes]:
-        response = self.session.get(url=url, headers=headers, timeout=timeout, stream=True)
-        response.raise_for_status()
-        return response.iter_content(chunk_size=CHUNK_SIZE)
+    def post(self, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Make a POST request to the specified endpoint
 
-    def post(self, endpoint, data=None):
-        url = f"{self.base_url}/{endpoint}"
+        Args:
+            endpoint: API endpoint path
+            data: Request body data
+
+        Returns:
+            JSON response as dictionary
+
+        Raises:
+            requests.exceptions.RequestException: If request fails
+        """
+        url = self._build_url(endpoint)
         response = self.session.post(url, json=data, timeout=self.timeout)
         response.raise_for_status()
         return response.json()
+
+    def get_multiple(self, endpoints: List[str]) -> List[Dict[str, Any]]:
+        """
+        Make multiple GET requests to different endpoints
+
+        Args:
+            endpoints: List of API endpoint paths
+
+        Returns:
+            List of JSON responses
+        """
+        results = []
+        for endpoint in endpoints:
+            try:
+                result = self.get(endpoint)
+                results.append(result)
+            except requests.exceptions.RequestException as e:
+                results.append({"error": str(e), "endpoint": endpoint})
+        return results
+
+    def _build_url(self, endpoint: str) -> str:
+        """
+        Build full URL from base URL and endpoint
+
+        Args:
+            endpoint: API endpoint path
+
+        Returns:
+            Complete URL
+        """
+        if self.base_url:
+            return f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+        return endpoint
+
+    def set_auth_token(self, token: str):
+        """
+        Set authentication token in session headers
+
+        Args:
+            token: Bearer token for authentication
+        """
+        self.session.headers.update({'Authorization': f'Bearer {token}'})
+
+    def close(self):
+        """Close the HTTP session"""
+        self.session.close()
