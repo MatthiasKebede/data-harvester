@@ -20,17 +20,31 @@ src/
 ```
 
 ## Setup
-1. Install dependencies:
+1. Create a virtual environment and install dependencies:
    ```bash
+   python -m venv .venv
+   source .venv/bin/activate
    pip install -r requirements.txt
    ```
 
 2. Run tests:
    ```bash
-   pytest
+   python -m pytest
    ```
 
-## Usage
+3. Run the application directly (optional):
+   - Install and run `json-server`:
+      ```bash
+      npm install -g json-server
+      json-server --watch db.json --port 3000
+      ```
+   - Run the Data Harvester application
+      ```bash
+      python -m src.main
+      ```
+
+
+## Overview
 ### Basic Data Fetching
 ```python
 from src.data_fetcher import DataFetcher
@@ -103,71 +117,35 @@ print(f"Visualizations: {report['visualizations']}")
 ```
 
 
-## Warmup Task: Add a New Aggregation Function
-This warmup task is designed to help you get familiar with the structure of the codebase and the process of adding new functionality and tests.
+## Warmup Task: Update and Add New Fetching Methods
+This warmup task is designed to help you get familiar with the structure of the codebase and the process of adding new functionality and tests. Example data can be found in [db.json](db.json).
 
 ### Objective
-You will add a new function to the `data_processor.py` file that counts the frequency of unique values in a dataset field. Then, you will write a test for this function to ensure it works as expected.
+You will update the `fetch_posts()` method and add a new `fetch_post()` method to `data_fetcher.py`. Then, you will write one test for each function to ensure that they work as expected.
 
 ### Steps
 
 1. **Locate the File**:
-   - Open the `src/data_processor.py` file in your editor.
+   - Open the `src/data_fetcher.py` file in your editor.
+
+2. **Update the Existing Function**:
+   - Modify the `fetch_posts()` function to accept an optional `category` argument. If provided, the function should filter posts by the specified category.
 
 2. **Add the New Function**:
-   - Add a new function called `count_frequencies()` to the `DataProcessor` class. This function will count how many times each unique value appears in a specified field.
-   - Example implementation:
-     ```python
-     def count_frequencies(self, data_list: List[Dict[str, Any]], field: str) -> Dict[str, int]:
-         """
-         Count the frequency of unique values in a field.
-
-         Args:
-             data_list: List of data dictionaries
-             field: Field name to count frequencies for
-
-         Returns:
-             Dictionary with values as keys and their counts as values
-         """
-         frequencies = {}
-         for item in data_list:
-             if field in item:
-                 value = str(item[field])
-                 frequencies[value] = frequencies.get(value, 0) + 1
-         return frequencies
-     ```
+   - Add a new function called `fetch_post()` to retrieve a specific post by its ID.
 
 3. **Write a Test**:
-   - Open the `tests/test_data_processor.py` file.
-   - Add a test function to verify the behavior of `count_frequencies()`.
-   - Example test:
-     ```python
-     def test_count_frequencies(self):
-         """Test counting value frequencies."""
-         processor = DataProcessor()
-         data = [
-             {'category': 'A', 'value': 10},
-             {'category': 'B', 'value': 20},
-             {'category': 'A', 'value': 15},
-             {'category': 'C', 'value': 30},
-             {'category': 'A', 'value': 25}
-         ]
-         frequencies = processor.count_frequencies(data, 'category')
-         
-         assert frequencies['A'] == 3
-         assert frequencies['B'] == 1
-         assert frequencies['C'] == 1
-         assert len(frequencies) == 3
-     ```
+   - Open the `tests/test_data_fetcher.py` file.
+   - Add new test functions to verify the newly-added behavior (two tests in total). These tests should call the relevant functions and assert the result.
 
 4. **Run the Test**:
    - Use the following command to run the test and ensure your changes work as expected:
      ```bash
-     pytest tests/test_data_processor.py::TestDataProcessor::test_count_frequencies -v
+     python -m pytest tests/test_data_fetcher.py -v
      ```
 
 5. **Verify the Output**:
-   - Check that the test passes successfully. If it fails, review your code and make necessary adjustments.
+   - Check that the tests pass successfully. If not, review your code and make necessary adjustments.
 
 6. **Reflection**:
-   - After completing the task, take a moment to review the `data_processor.py` and `test_data_processor.py` files. Note how the code is structured and how tests are written to validate functionality.
+   - After completing the task, take a moment to review the `data_fetcher.py` and `test_data_fetcher.py` files. Note how the code is structured and how tests are written to validate functionality.

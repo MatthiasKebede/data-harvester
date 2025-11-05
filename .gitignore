@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+build/
+htmlcov
+.coverage
+.coverage.*
+.cache
+
+graphs/
+reports/
+output/

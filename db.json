@@ -1,0 +1,17 @@
+{
+  "users": [
+    {"id": "12345", "name": "John Doe", "email": "john@example.com"},
+    {"id": "67890", "name": "Jane Smith", "email": "jane@example.com"}
+  ],
+  "posts": [
+    {"id": "1", "user_id": "12345", "title": "Post 1", "likes": 100, "views": 500},
+    {"id": "2", "user_id": "12345", "title": "Post 2", "likes": 50, "views": 300},
+    {"id": "3", "user_id": "67890", "title": "Post 3", "likes": 200, "views": 700},
+    {"id": "4", "user_id": "67890", "title": "Post 4", "likes": 150, "views": 400}
+  ],
+  "categories": [
+    {"id": "1", "name": "Technology"},
+    {"id": "2", "name": "Health"},
+    {"id": "3", "name": "Education"}
+  ]
+}

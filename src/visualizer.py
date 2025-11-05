@@ -227,8 +227,9 @@ class DataVisualizer:
         Returns:
             Full path to saved file
         """
+        self.figure_count += 1
+        
         if filename is None:
-            self.figure_count += 1
             filename = f"figure_{self.figure_count}.png"
         
         filepath = os.path.join(self.output_dir, filename)

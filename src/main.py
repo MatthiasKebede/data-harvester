@@ -92,6 +92,16 @@ def create_visualization_report(data: List[Dict[str, Any]], output_dir: str = "o
                 ylabel="Count"
             )
             visualizations.append(path)
+        # Use likes field if category is missing
+        elif 'likes' in data[0]:
+            chart_data = {item['title']: item['likes'] for item in data}
+            path = visualizer.plot_bar_chart(
+                chart_data,
+                title="Likes per Post",
+                xlabel="Post Title",
+                ylabel="Likes"
+            )
+            visualizations.append(path)
     
     return visualizations
 
@@ -116,16 +126,27 @@ def generate_comprehensive_report(data: List[Dict[str, Any]],
 
 
 if __name__ == "__main__":
-    # Example usage
     print("Data Harvester Application")
     print("=" * 50)
     
-    # Example: Fetch and process data
-    example_base_url = "https://api.example.com"
-    example_user_id = "12345"
+    base_url = "http://localhost:3000"
+    user_id = "12345"
     
-    print(f"Fetching user data for user {example_user_id}...")
-    # user_data = fetch_and_process_user_data(example_base_url, example_user_id)
-    # print(f"User data fetched: {user_data}")
+    print(f"Fetching user data for user {user_id}...")
+    user_data = fetch_and_process_user_data(base_url, user_id)
+    print(f"User data fetched: {user_data}")
+
+    print("\nFetching and analyzing posts...")
+    post_analysis = fetch_and_analyze_posts(base_url, user_id, 10)
+    print(f"Post analysis: {post_analysis}")
     
-    print("\nData Harvester is ready to use")
+    print("\nCreating visualizations...")
+    visualizations = create_visualization_report(post_analysis['posts'], output_dir="graphs")
+    print(f"Visualizations created: {visualizations}")
+    
+    print("\nGenerating a comprehensive report...")
+    numeric_fields = ["likes", "views"]
+    report = generate_comprehensive_report(post_analysis['posts'], numeric_fields, output_dir="reports")
+    print(f"Comprehensive report generated: {report}")
+    
+    # print("\nData Harvester is finished")
