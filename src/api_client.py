@@ -36,25 +36,6 @@ def fetch_user(user_id: str) -> Dict[str, Any]:
     return response.json()
 
 
-# def fetch_user_posts(user_id: str) -> List[Dict[str, Any]]:
-#     """
-#     Fetch all posts for a specific user
-    
-#     Args:
-#         user_id: User identifier
-        
-#     Returns:
-#         List of post dictionaries
-#     """
-#     response = requests.get(
-#         f"{BASE_URL}/posts",
-#         params={"user_id": user_id},
-#         timeout=TIMEOUT
-#     )
-#     response.raise_for_status()
-#     return response.json()
-
-
 def fetch_posts_by_category(category: str) -> List[Dict[str, Any]]:
     """
     Fetch posts filtered by category

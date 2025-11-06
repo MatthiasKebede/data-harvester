@@ -2,10 +2,10 @@
 Tests for the api_client module
 """
 
+import requests
 from unittest.mock import patch, Mock
 from src.api_client import (
     fetch_users,
-    # fetch_user_posts,
     fetch_comments,
     post_comment,
     check_api_status
@@ -26,15 +26,6 @@ def test_fetch_users(sample_users):
         users = fetch_users()
         assert len(users) == 3
         assert users[0]["name"] == "Alice Johnson"
-
-
-# def test_fetch_user_posts(sample_posts):
-#     """Test fetching posts for a specific user"""
-#     user_posts = [p for p in sample_posts if p["user_id"] == "1"]
-#     with patch('requests.get', return_value=mock_requests_get(user_posts)):
-#         posts = fetch_user_posts("1")
-#         assert len(posts) == 2
-#         assert all(p["user_id"] == "1" for p in posts)
 
 
 def test_fetch_comments(sample_comments):
@@ -65,5 +56,5 @@ def test_check_api_status():
         assert check_api_status() is True
         
         # Test failure
-        mock_get.side_effect = Exception("Connection failed")
+        mock_get.side_effect = requests.exceptions.RequestException("Connection failed")
         assert check_api_status() is False
