@@ -1,5 +1,5 @@
 # Data Harvester
-The Data Harvester is a Python application designed to fetch and process data from various APIs. It currently uses the `requests` library for HTTP operations and `matplotlib` for data visualization, with plans to migrate to `httpx` and `seaborn` respectively.
+The Data Harvester is a Python application designed to fetch and process data from the web. It currently uses the `requests` library for HTTP operations and `matplotlib` for data visualization, with plans to migrate to `httpx` and `seaborn` respectively.
 
 ## Features
 - Fetch data from multiple API endpoints using HTTP GET and POST requests
@@ -121,7 +121,7 @@ print(f"Visualizations: {report['visualizations']}")
 This warmup task is designed to help you get familiar with the structure of the codebase and the process of adding new functionality and tests. Example data can be found in [db.json](db.json).
 
 ### Objective
-You will update the `fetch_posts()` method and add a new `fetch_post()` method to `data_fetcher.py`. Then, you will write one test for each function to ensure that they work as expected.
+You will add a new `fetch_post()` method and update the existing `fetch_posts()` method in `data_fetcher.py`. Then, you will write one test for each function to ensure that they work as expected.
 
 ### Steps
 
@@ -145,7 +145,7 @@ You will update the `fetch_posts()` method and add a new `fetch_post()` method t
      ```
 
 5. **Verify the Output**:
-   - Check that the tests pass successfully. If not, review your code and make necessary adjustments.
+   - Check that the new tests pass successfully. If not, review your code and make necessary adjustments.
 
 6. **Reflection**:
    - After completing the task, take a moment to review the `data_fetcher.py` and `test_data_fetcher.py` files. Note how the code is structured and how tests are written to validate functionality.

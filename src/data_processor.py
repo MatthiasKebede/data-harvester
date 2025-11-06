@@ -3,7 +3,6 @@ Data processing module for transforming and analyzing API data.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime
 import statistics
 
 
@@ -35,29 +34,6 @@ class DataProcessor:
         
         self.processed_count += 1
         return cleaned
-
-    def extract_fields(self, data: Dict[str, Any], fields: List[str]) -> Dict[str, Any]:
-        """
-        Extract specific fields from data dictionary
-
-        Args:
-            data: Source data dictionary
-            fields: List of field names to extract
-
-        Returns:
-            Dictionary containing only specified fields
-        """
-        extracted = {}
-        for field in fields:
-            if field in data:
-                extracted[field] = data[field]
-            else:
-                # Try normalized version
-                normalized_field = field.lower().replace(' ', '_').replace('-', '_')
-                if normalized_field in data:
-                    extracted[field] = data[normalized_field]
-        
-        return extracted
 
     def aggregate_data(self, data_list: List[Dict[str, Any]], key: str) -> Dict[str, List[Any]]:
         """
@@ -115,50 +91,6 @@ class DataProcessor:
             'sum': sum(values)
         }
 
-    def filter_data(self, data_list: List[Dict[str, Any]], 
-                   field: str, condition: callable) -> List[Dict[str, Any]]:
-        """
-        Filter data based on a condition function
-
-        Args:
-            data_list: List of data dictionaries
-            field: Field to apply condition to
-            condition: Function that takes a value and returns bool
-
-        Returns:
-            Filtered list of data dictionaries
-        """
-        filtered = []
-        for item in data_list:
-            if field in item and condition(item[field]):
-                filtered.append(item)
-        
-        return filtered
-
-    def transform_dates(self, data: Dict[str, Any], date_fields: List[str], 
-                       date_format: str = "%Y-%m-%d") -> Dict[str, Any]:
-        """
-        Transform date strings to datetime objects
-
-        Args:
-            data: Data dictionary
-            date_fields: List of field names containing dates
-            date_format: Date string format
-
-        Returns:
-            Data dictionary with transformed dates
-        """
-        transformed = data.copy()
-        for field in date_fields:
-            if field in transformed and isinstance(transformed[field], str):
-                try:
-                    transformed[field] = datetime.strptime(transformed[field], date_format)
-                except ValueError:
-                    # Keep original value if parsing fails
-                    pass
-        
-        return transformed
-
     def merge_data(self, data1: Dict[str, Any], data2: Dict[str, Any], 
                   prefix1: str = "source1", prefix2: str = "source2") -> Dict[str, Any]:
         """
@@ -190,16 +122,3 @@ class DataProcessor:
                 merged[key] = value
         
         return merged
-
-    def get_processed_count(self) -> int:
-        """
-        Get the number of items processed
-
-        Returns:
-            Count of processed items
-        """
-        return self.processed_count
-
-    def reset_count(self):
-        """Reset the processed count to zero"""
-        self.processed_count = 0

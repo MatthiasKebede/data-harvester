@@ -130,23 +130,3 @@ class TestDataVisualizer:
         assert os.path.exists(filepath2)
         assert filepath1 != filepath2
         assert visualizer.figure_count == 2
-
-    def test_get_figure_count(self, temp_output_dir):
-        """Test getting figure count"""
-        visualizer = DataVisualizer(output_dir=temp_output_dir)
-        assert visualizer.get_figure_count() == 0
-        
-        visualizer.plot_bar_chart({'A': 10})
-        visualizer.plot_line_chart({'A': 10})
-        
-        assert visualizer.get_figure_count() == 2
-
-    def test_reset_count(self, temp_output_dir):
-        """Test resetting figure count"""
-        visualizer = DataVisualizer(output_dir=temp_output_dir)
-        
-        visualizer.plot_bar_chart({'A': 10})
-        assert visualizer.get_figure_count() == 1
-        
-        visualizer.reset_count()
-        assert visualizer.get_figure_count() == 0

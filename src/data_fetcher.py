@@ -22,7 +22,6 @@ class DataFetcher:
         """
         self.client = HTTPClient(base_url=base_url, timeout=timeout)
         self.processor = DataProcessor()
-        self.cache = {}
 
     def fetch_user_data(self, user_id: str) -> Dict[str, Any]:
         """
@@ -83,49 +82,6 @@ class DataFetcher:
             return [self.processor.clean_data(comment) for comment in data['comments']]
         else:
             return [self.processor.clean_data(data)]
-
-    def fetch_analytics(self, resource: str, date_range: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-        """
-        Fetch analytics data for a resource
-
-        Args:
-            resource: Resource type (e.g., 'users', 'posts')
-            date_range: Optional date range with 'start' and 'end' keys
-
-        Returns:
-            Analytics data dictionary
-        """
-        endpoint = f"analytics/{resource}"
-        params = date_range if date_range else {}
-        
-        data = self.client.get(endpoint, params=params)
-        return self.processor.clean_data(data)
-
-    def fetch_with_cache(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Fetch data with caching to avoid duplicate requests
-
-        Args:
-            endpoint: API endpoint path
-            params: Query parameters
-
-        Returns:
-            Cached or freshly fetched data
-        """
-        cache_key = f"{endpoint}:{str(params)}"
-        
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-        
-        data = self.client.get(endpoint, params=params)
-        cleaned_data = self.processor.clean_data(data)
-        self.cache[cache_key] = cleaned_data
-        
-        return cleaned_data
-
-    def clear_cache(self):
-        """Clear the data cache"""
-        self.cache.clear()
 
     def close(self):
         """Close the HTTP client connection"""

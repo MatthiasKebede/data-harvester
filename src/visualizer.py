@@ -228,7 +228,7 @@ class DataVisualizer:
             Full path to saved file
         """
         self.figure_count += 1
-        
+
         if filename is None:
             filename = f"figure_{self.figure_count}.png"
         
@@ -236,16 +236,3 @@ class DataVisualizer:
         plt.savefig(filepath, dpi=100, bbox_inches='tight')
         
         return filepath
-
-    def get_figure_count(self) -> int:
-        """
-        Get the number of figures created
-
-        Returns:
-            Figure count
-        """
-        return self.figure_count
-
-    def reset_count(self):
-        """Reset the figure count to zero"""
-        self.figure_count = 0

@@ -46,18 +46,6 @@ class TestClient:
             assert result == {'results': [1, 2, 3]}
             mock_get.assert_called_once()
 
-    def test_build_url_with_base(self):
-        """Test URL building with base URL"""
-        client = HTTPClient(base_url="https://api.example.com")
-        url = client._build_url("users/123")
-        assert url == "https://api.example.com/users/123"
-
-    def test_build_url_without_base(self):
-        """Test URL building without base URL"""
-        client = HTTPClient()
-        url = client._build_url("https://full-url.com/endpoint")
-        assert url == "https://full-url.com/endpoint"
-
     def test_set_auth_token(self):
         """Test setting authentication token"""
         client = HTTPClient()

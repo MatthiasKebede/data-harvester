@@ -35,17 +35,6 @@ def sample_comments_data():
 
 
 @pytest.fixture
-def sample_analytics_data():
-    return {
-        'resource': 'posts',
-        'total_views': 450,
-        'total_likes': 60,
-        'average_engagement': 0.133,
-        'date_range': {'start': '2025-01-01', 'end': '2025-11-05'}
-    }
-
-
-@pytest.fixture
 def mock_response():
     """Create a mock response object"""
     mock = Mock()
