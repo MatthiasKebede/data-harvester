@@ -3,42 +3,57 @@ Shared test fixtures and configuration
 """
 
 import pytest
-from unittest.mock import Mock
 
 
 @pytest.fixture
-def sample_user_data():
+def sample_user():
+    """Sample user data for testing"""
     return {
-        'id': '123',
-        'name': 'John Doe',
-        'email': 'john@example.com',
-        'age': 30,
-        'city': 'New York'
+        'id': '1',
+        'name': 'Alice Johnson',
+        'email': 'alice@example.com'
     }
 
 
 @pytest.fixture
-def sample_posts_data():
+def sample_users():
+    """Sample list of users for testing"""
     return [
-        {'id': '1', 'user_id': '123', 'title': 'First Post', 'views': 100, 'likes': 10},
-        {'id': '2', 'user_id': '123', 'title': 'Second Post', 'views': 150, 'likes': 20},
-        {'id': '3', 'user_id': '456', 'title': 'Third Post', 'views': 200, 'likes': 30}
+        {'id': '1', 'name': 'Alice Johnson', 'email': 'alice@example.com'},
+        {'id': '2', 'name': 'Bob Smith', 'email': 'bob@example.com'},
+        {'id': '3', 'name': 'Carol White', 'email': 'carol@example.com'}
     ]
 
 
 @pytest.fixture
-def sample_comments_data():
+def sample_posts():
+    """Sample posts data for testing"""
     return [
-        {'id': '1', 'post_id': '1', 'author': 'Alice', 'content': 'Great post!'},
-        {'id': '2', 'post_id': '1', 'author': 'Bob', 'content': 'Thanks for sharing'}
+        {'id': '1', 'user_id': '1', 'title': 'Getting Started with Python', 'likes': 45, 'views': 230, 'category': 'Technology'},
+        {'id': '2', 'user_id': '1', 'title': 'Data Science Tips', 'likes': 67, 'views': 312, 'category': 'Technology'},
+        {'id': '3', 'user_id': '2', 'title': 'Healthy Living', 'likes': 34, 'views': 189, 'category': 'Health'},
+        {'id': '4', 'user_id': '2', 'title': 'Exercise Routines', 'likes': 52, 'views': 276, 'category': 'Health'},
+        {'id': '5', 'user_id': '3', 'title': 'Learning Strategies', 'likes': 41, 'views': 198, 'category': 'Education'}
     ]
 
 
 @pytest.fixture
-def mock_response():
-    """Create a mock response object"""
-    mock = Mock()
-    mock.status_code = 200
-    mock.json.return_value = {'success': True}
-    mock.raise_for_status.return_value = None
-    return mock
+def sample_post():
+    """Sample single post for testing"""
+    return {
+        'id': '1',
+        'user_id': '1',
+        'title': 'Getting Started with Python',
+        'likes': 45,
+        'views': 230,
+        'category': 'Technology'
+    }
+
+
+@pytest.fixture
+def sample_comments():
+    """Sample comments data for testing"""
+    return [
+        {'id': '1', 'post_id': '1', 'author': 'Mike', 'content': 'Great introduction!'},
+        {'id': '2', 'post_id': '1', 'author': 'Sarah', 'content': 'Very helpful, thanks!'}
+    ]

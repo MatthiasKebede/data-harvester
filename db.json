@@ -4,10 +4,10 @@
     {"id": "67890", "name": "Jane Smith", "email": "jane@example.com"}
   ],
   "posts": [
-    {"id": "1", "user_id": "12345", "title": "Post 1", "likes": 100, "views": 500},
-    {"id": "2", "user_id": "12345", "title": "Post 2", "likes": 50, "views": 300},
-    {"id": "3", "user_id": "67890", "title": "Post 3", "likes": 200, "views": 700},
-    {"id": "4", "user_id": "67890", "title": "Post 4", "likes": 150, "views": 400}
+    {"id": "1", "user_id": "12345", "title": "Getting Started with Python", "likes": 100, "views": 500, "category": "Technology"},
+    {"id": "2", "user_id": "12345", "title": "Healthy Living Tips", "likes": 50, "views": 300, "category": "Health"},
+    {"id": "3", "user_id": "67890", "title": "Introduction to Data Science", "likes": 200, "views": 700, "category": "Education"},
+    {"id": "4", "user_id": "67890", "title": "Web Development Best Practices", "likes": 150, "views": 400, "category": "Technology"}
   ],
   "categories": [
     {"id": "1", "name": "Technology"},

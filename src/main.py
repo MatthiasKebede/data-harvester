@@ -1,152 +1,96 @@
 """
-Main entry point for the Data Harvester application
+Main application orchestrator, coordinates the data harvesting workflow
 """
 
-from src.data_fetcher import DataFetcher
-from src.data_processor import DataProcessor
-from src.visualizer import DataVisualizer
-from src.report_generator import ReportGenerator
-from typing import Dict, Any, List
+import os
+
+from src.api_client import check_api_status, fetch_users
+from src.analyzer import (
+    analyze_user_activity,
+    compare_users,
+    analyze_post_distribution,
+    analyze_engagement_trends
+)
+from src.dashboard import (
+    generate_overview_dashboard,
+    generate_user_report,
+    generate_category_report,
+    save_report_json
+)
 
 
-def fetch_and_process_user_data(base_url: str, user_id: str) -> Dict[str, Any]:
+def main():
     """
-    Fetch and process user data from API
-
-    Args:
-        base_url: Base URL of the API
-        user_id: User identifier
-
-    Returns:
-        Processed user data
+    Main application entry point.
+    Orchestrates data fetching, analysis, and dashboard generation.
     """
-    fetcher = DataFetcher(base_url=base_url)
-    try:
-        user_data = fetcher.fetch_user_data(user_id)
-        return user_data
-    finally:
-        fetcher.close()
-
-
-def fetch_and_analyze_posts(base_url: str, user_id: str = None, limit: int = 10) -> Dict[str, Any]:
-    """
-    Fetch posts and generate analysis report
-
-    Args:
-        base_url: Base URL of the API
-        user_id: Optional user ID to filter posts
-        limit: Maximum number of posts to fetch
-
-    Returns:
-        Analysis report with statistics
-    """
-    fetcher = DataFetcher(base_url=base_url)
-    processor = DataProcessor()
-    
-    try:
-        posts = fetcher.fetch_posts(user_id=user_id, limit=limit)
-        
-        # Calculate statistics if posts have numeric fields
-        stats = {}
-        if posts and 'views' in posts[0]:
-            stats['views'] = processor.calculate_statistics(posts, 'views')
-        if posts and 'likes' in posts[0]:
-            stats['likes'] = processor.calculate_statistics(posts, 'likes')
-        
-        return {
-            'total_posts': len(posts),
-            'posts': posts,
-            'statistics': stats
-        }
-    finally:
-        fetcher.close()
-
-
-def create_visualization_report(data: List[Dict[str, Any]], output_dir: str = "output") -> List[str]:
-    """
-    Create visualizations from data
-
-    Args:
-        data: List of data dictionaries
-        output_dir: Directory to save visualizations
-
-    Returns:
-        List of paths to generated visualizations
-    """
-    visualizer = DataVisualizer(output_dir=output_dir)
-    processor = DataProcessor()
-    
-    visualizations = []
-    
-    # Create bar chart if data has appropriate structure
-    if data and isinstance(data, list):
-        # Aggregate by a common field if available
-        if 'category' in data[0]:
-            aggregated = processor.aggregate_data(data, 'category')
-            chart_data = {k: len(v) for k, v in aggregated.items()}
-            
-            path = visualizer.plot_bar_chart(
-                chart_data,
-                title="Data Distribution by Category",
-                xlabel="Category",
-                ylabel="Count"
-            )
-            visualizations.append(path)
-        # Use likes field if category is missing
-        elif 'likes' in data[0]:
-            chart_data = {item['title']: item['likes'] for item in data}
-            path = visualizer.plot_bar_chart(
-                chart_data,
-                title="Likes per Post",
-                xlabel="Post Title",
-                ylabel="Likes"
-            )
-            visualizations.append(path)
-    
-    return visualizations
-
-
-def generate_comprehensive_report(data: List[Dict[str, Any]], 
-                                 numeric_fields: List[str],
-                                 output_dir: str = "reports") -> Dict[str, Any]:
-    """
-    Generate a comprehensive report with statistics and visualizations
-
-    Args:
-        data: List of data dictionaries
-        numeric_fields: List of numeric field names to analyze
-        output_dir: Directory to save the report
-
-    Returns:
-        Complete report dictionary
-    """
-    generator = ReportGenerator(output_dir=output_dir)
-    report = generator.generate_summary_report(data, numeric_fields)
-    return report
-
-
-if __name__ == "__main__":
     print("Data Harvester Application")
     print("=" * 50)
     
-    base_url = "http://localhost:3000"
-    user_id = "12345"
+    print("\nChecking API health...")
+    if not check_api_status():
+        print("ERROR: API is not responding. Please start json-server.")
+        return
+    print("API is healthy")
     
-    print(f"Fetching user data for user {user_id}...")
-    user_data = fetch_and_process_user_data(base_url, user_id)
-    print(f"User data fetched: {user_data}")
+    # Create necessary directories
+    os.makedirs("graphs", exist_ok=True)
+    os.makedirs("reports", exist_ok=True)
+    os.makedirs("reports/figures", exist_ok=True)
+    
+    print("\nFetching users...")
+    users = fetch_users()
+    print(f"Found {len(users)} users")
+    for user in users:
+        print(f"   - {user['name']} (ID: {user['id']})")
+    
+    # Analyze first user activity
+    if users:
+        user_id = users[0]["id"]
+        print(f"\nAnalyzing activity for {users[0]['name']}...")
+        activity = analyze_user_activity(user_id)
+        if "error" not in activity:
+            print(f"Total posts: {activity['total_posts']}")
+            print(f"Average likes: {activity['avg_likes']:.1f}")
+            print(f"Plots saved: {activity['plots']}")
+    
+    if len(users) >= 2:
+        print("\nComparing users...")
+        user_ids = [u["id"] for u in users[:2]]
+        comparison_plot = compare_users(user_ids)
+        print(f"Comparison plot saved: {comparison_plot}")
+    
+    print("\nAnalyzing post distribution...")
+    distribution = analyze_post_distribution()
+    print(f"Distribution plot saved: {distribution['plot']}")
+    
+    print("\nAnalyzing engagement trends...")
+    trends_plot = analyze_engagement_trends()
+    print(f"Trends plot saved: {trends_plot}")
+    
+    print("\nGenerating overview dashboard...")
+    dashboard = generate_overview_dashboard()
+    print(f"Total users: {dashboard['total_users']}")
+    print(f"Total posts: {dashboard['total_posts']}")
+    
+    if users:
+        print(f"\nGenerating user report for {users[0]['name']}...")
+        user_report = generate_user_report(users[0]["id"])
+        report_path = save_report_json(user_report, f"user_{users[0]['id']}_report.json")
+        print(f"User report saved: {report_path}")
+        if "engagement_plot" in user_report:
+            print(f"Engagement plot: {user_report['engagement_plot']}")
+    
+    print("\nGenerating category report...")
+    category_report = generate_category_report()
+    report_path = save_report_json(category_report, "category_report.json")
+    print(f"Category report saved: {report_path}")
+    print(f"Category plot: {category_report['plot']}")
+    
+    print("\n" + "=" * 50)
+    print("All operations completed successfully!")
 
-    print("\nFetching and analyzing posts...")
-    post_analysis = fetch_and_analyze_posts(base_url, user_id, 10)
-    print(f"Post analysis: {post_analysis}")
-    
-    print("\nCreating visualizations...")
-    visualizations = create_visualization_report(post_analysis['posts'], output_dir="graphs")
-    print(f"Visualizations created: {visualizations}")
-    
-    print("\nGenerating a comprehensive report...")
-    numeric_fields = ["likes", "views"]
-    report = generate_comprehensive_report(post_analysis['posts'], numeric_fields, output_dir="reports")
-    print(f"Comprehensive report generated: {report}")
-    
-    # print("\nData Harvester is finished")
+
+if __name__ == "__main__":
+    main()
+
