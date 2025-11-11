@@ -1,5 +1,5 @@
 # Data Harvester
-A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `matplotlib` for data visualization, with plans to migrate to `httpx` and `seaborn` respectively.
+A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `matplotlib` for data visualization, with plans to migrate to `httpx` and `plotly` respectively. See [this report](./temp_report.md) for WIP migration details.
 
 ## Features
 - Fetch data from multiple API endpoints using HTTP GET and POST requests

@@ -68,8 +68,7 @@ def fetch_all_posts() -> List[Dict[str, Any]]:
     Returns:
         List of all post dictionaries
     """
-    session = get_session()
-    response = session.get(
+    response = requests.get(
         f"{BASE_URL}/posts",
         headers = {
             "Accept": "application/json",
@@ -119,8 +118,7 @@ def post_comment(post_id: str, author: str, content: str) -> Dict[str, Any]:
     Returns:
         Created comment data
     """
-    session = get_session()
-    response = session.post(
+    response = requests.post(
         f"{BASE_URL}/comments",
         json={"post_id": post_id, "author": author, "content": content},
         headers={"Content-Type": "application/json; charset=utf-8"},
