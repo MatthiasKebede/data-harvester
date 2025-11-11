@@ -4,7 +4,7 @@ Main application orchestrator, coordinates the data harvesting workflow
 
 import os
 
-from src.api_client import check_api_status, fetch_users
+from src.api_client import check_api_status, fetch_all_users
 from src.analyzer import (
     analyze_user_activity,
     compare_users,
@@ -39,7 +39,7 @@ def main():
     os.makedirs("reports/figures", exist_ok=True)
     
     print("\nFetching users...")
-    users = fetch_users()
+    users = fetch_all_users()
     print(f"Found {len(users)} users")
     for user in users:
         print(f"   - {user['name']} (ID: {user['id']})")

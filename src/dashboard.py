@@ -2,12 +2,12 @@
 Dashboard module for generating comprehensive reports and visualizations
 """
 
-import requests
 import matplotlib.pyplot as plt
 import matplotlib
 from typing import Dict, Any
 import json
 import os
+from src.api_client import fetch_user, fetch_all_users, fetch_all_posts
 
 matplotlib.use('Agg')
 
@@ -22,15 +22,9 @@ def generate_overview_dashboard() -> Dict[str, Any]:
     Returns:
         Dashboard data with plot paths
     """
-    # Fetch users with requests
-    users_response = requests.get(f"{BASE_URL}/users", timeout=TIMEOUT)
-    users_response.raise_for_status()
-    users = users_response.json()
-    
-    # Fetch posts with requests
-    posts_response = requests.get(f"{BASE_URL}/posts", timeout=TIMEOUT)
-    posts_response.raise_for_status()
-    posts = posts_response.json()
+    # Fetch data
+    users = fetch_all_users()
+    posts = fetch_all_posts()
     
     # Calculate metrics
     dashboard = {
@@ -39,7 +33,7 @@ def generate_overview_dashboard() -> Dict[str, Any]:
         "avg_posts_per_user": len(posts) / len(users) if users else 0
     }
     
-    # Create overview bar chart with matplotlib
+    # Create overview bar chart
     metrics = ['Users', 'Posts', 'Avg Posts/User']
     values = [dashboard["total_users"], dashboard["total_posts"], dashboard["avg_posts_per_user"]]
     
@@ -62,7 +56,7 @@ def generate_overview_dashboard() -> Dict[str, Any]:
         uid = post.get("user_id", "unknown")
         user_post_counts[uid] = user_post_counts.get(uid, 0) + 1
     
-    # Create pie chart with matplotlib
+    # Create pie chart
     plt.figure(figsize=(8, 8))
     plt.pie(
         user_post_counts.values(),
@@ -91,19 +85,10 @@ def generate_user_report(user_id: str) -> Dict[str, Any]:
     Returns:
         User report with statistics and plots
     """
-    # Fetch user with requests
-    user_response = requests.get(f"{BASE_URL}/users/{user_id}", timeout=TIMEOUT)
-    user_response.raise_for_status()
-    user = user_response.json()
-    
-    # Fetch user's posts with requests
-    posts_response = requests.get(
-        f"{BASE_URL}/posts",
-        params={"user_id": user_id},
-        timeout=TIMEOUT
-    )
-    posts_response.raise_for_status()
-    posts = posts_response.json()
+    # Fetch data
+    user = fetch_user(user_id)
+    all_posts = fetch_all_posts()
+    posts = [p for p in all_posts if p.get("user_id") == user_id]
     
     report = {
         "user": user,
@@ -118,7 +103,7 @@ def generate_user_report(user_id: str) -> Dict[str, Any]:
     likes = [p.get("likes", 0) for p in posts]
     views = [p.get("views", 0) for p in posts]
     
-    # Create likes bar chart with matplotlib
+    # Create likes bar chart
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
     
     ax1.bar(range(len(titles)), likes, color='steelblue')
@@ -153,10 +138,8 @@ def generate_category_report() -> Dict[str, Any]:
     Returns:
         Category analysis report with plots
     """
-    # Fetch all posts with requests
-    response = requests.get(f"{BASE_URL}/posts", timeout=TIMEOUT)
-    response.raise_for_status()
-    posts = response.json()
+    # Fetch data
+    posts = fetch_all_posts()
     
     # Aggregate by category
     category_data = {}
@@ -176,7 +159,7 @@ def generate_category_report() -> Dict[str, Any]:
     avg_views = [sum(category_data[c]["views"]) / len(category_data[c]["views"]) 
                  for c in categories]
     
-    # Create grouped bar chart with matplotlib
+    # Create grouped bar chart
     x = range(len(categories))
     width = 0.35
     

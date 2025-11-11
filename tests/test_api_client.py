@@ -3,35 +3,49 @@ Tests for the api_client module
 """
 
 import requests
-from unittest.mock import patch, Mock
+import json
+from unittest.mock import patch, Mock, MagicMock
 from src.api_client import (
-    fetch_users,
+    fetch_all_users,
     fetch_comments,
     post_comment,
     check_api_status
 )
 
 
-def mock_requests_get(return_value):
+def mock_response(return_value, status_code=200):
     """Helper to create a mocked GET response"""
-    mock_response = Mock()
-    mock_response.json.return_value = return_value
-    mock_response.raise_for_status.return_value = None
-    return mock_response
+    mock_resp = Mock()
+    mock_resp.json.return_value = return_value
+    mock_resp.status_code = status_code
+    mock_resp.raise_for_status.return_value = None
+    mock_resp.text = str(return_value)
+    return mock_resp
 
 
 def test_fetch_users(sample_users):
     """Test fetching all users"""
-    with patch('requests.get', return_value=mock_requests_get(sample_users)):
-        users = fetch_users()
+    with patch('src.api_client.get_session') as mock_get_session:
+        mock_session = MagicMock()
+        mock_session.get.return_value = mock_response(sample_users)
+        mock_get_session.return_value = mock_session
+
+        users = fetch_all_users()
         assert len(users) == 3
         assert users[0]["name"] == "Alice Johnson"
 
 
 def test_fetch_comments(sample_comments):
     """Test fetching comments for a post"""
-    with patch('requests.get', return_value=mock_requests_get(sample_comments)):
-        comments = fetch_comments("1")
+    with patch('requests.get') as mock_get:
+        # Mock streaming response
+        mock_resp = Mock()
+        mock_resp.raise_for_status.return_value = None
+        content_bytes = json.dumps(sample_comments).encode('utf-8')
+        mock_resp.iter_content.return_value = iter([content_bytes])
+        mock_get.return_value = mock_resp
+
+        comments = list(fetch_comments("1"))
         assert len(comments) == 2
         assert comments[0]["content"] == "Great introduction!"
 
@@ -40,12 +54,15 @@ def test_post_comment():
     """Test posting a new comment"""
     expected = {"id": "10", "post_id": "1", "author": "TestUser", "content": "Test comment"}
     
-    with patch('requests.post') as mock_post:
-        mock_post.return_value = mock_requests_get(expected)
+    with patch('src.api_client.get_session') as mock_get_session:
+        mock_session = MagicMock()
+        mock_session.post.return_value = mock_response(expected)
+        mock_get_session.return_value = mock_session
+
         comment = post_comment("1", "TestUser", "Test comment")
-        
         assert comment["post_id"] == "1"
         assert comment["author"] == "TestUser"
+        assert comment["content"] == "Test comment"
 
 
 def test_check_api_status():

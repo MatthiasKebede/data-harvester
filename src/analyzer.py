@@ -2,11 +2,11 @@
 Analyzer module that combines data fetching, processing, and visualization
 """
 
-import requests
 import matplotlib.pyplot as plt
 import matplotlib
-from typing import Dict, Any, List
 import statistics
+from typing import Dict, Any, List
+from src.api_client import fetch_user, fetch_all_posts
 
 matplotlib.use('Agg')
 
@@ -24,20 +24,10 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
     Returns:
         Analysis results with stats and plot paths
     """
-    # Fetch user data with requests
-    user_response = requests.get(f"{BASE_URL}/users/{user_id}", timeout=TIMEOUT)
-    user_response.raise_for_status()
-    user = user_response.json()
-    
-    # Fetch user's posts with requests
-    posts_response = requests.get(
-        f"{BASE_URL}/posts",
-        params={"user_id": user_id},
-        timeout=TIMEOUT
-    )
-    posts_response.raise_for_status()
-    posts = posts_response.json()
-    
+    # Fetch data
+    user = fetch_user(user_id)
+    all_posts = fetch_all_posts()
+    posts = [p for p in all_posts if p.get("user_id") == user_id]
     if not posts:
         return {"error": "No posts found"}
     
@@ -56,7 +46,7 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
         "avg_views": statistics.mean(views) if views else 0,
     }
     
-    # Create bar chart with matplotlib
+    # Create bar chart
     plt.figure(figsize=(10, 6))
     plt.bar(range(len(titles)), likes, color='steelblue')
     plt.xlabel('Post Index')
@@ -67,7 +57,7 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
     plt.savefig(likes_plot)
     plt.close()
     
-    # Create line chart with matplotlib
+    # Create line chart
     plt.figure(figsize=(10, 6))
     plt.plot(range(len(views)), views, marker='o', linewidth=2, color='darkgreen')
     plt.xlabel('Post Index')
@@ -93,31 +83,23 @@ def compare_users(user_ids: List[str]) -> str:
     Returns:
         Path to comparison chart
     """
+    # Fetch data
     user_stats = {}
+    all_posts = fetch_all_posts()
     
-    # Fetch posts for each user with requests
+    # Filter posts for each user
     for user_id in user_ids:
-        user_response = requests.get(f"{BASE_URL}/users/{user_id}", timeout=TIMEOUT)
-        user_response.raise_for_status()
-        user = user_response.json()
-        
-        posts_response = requests.get(
-            f"{BASE_URL}/posts",
-            params={"user_id": user_id},
-            timeout=TIMEOUT
-        )
-        posts_response.raise_for_status()
-        posts = posts_response.json()
+        user = fetch_user(user_id)
+        posts = [p for p in all_posts if p.get("user_id") == user_id]
         
         likes = [p.get("likes", 0) for p in posts]
         views = [p.get("views", 0) for p in posts]
-        
         user_stats[user["name"]] = {
             "avg_likes": statistics.mean(likes) if likes else 0,
             "avg_views": statistics.mean(views) if views else 0
         }
     
-    # Create grouped bar chart with matplotlib
+    # Create grouped bar chart
     users = list(user_stats.keys())
     avg_likes = [user_stats[u]["avg_likes"] for u in users]
     avg_views = [user_stats[u]["avg_views"] for u in users]
@@ -151,10 +133,8 @@ def analyze_post_distribution() -> Dict[str, Any]:
     Returns:
         Distribution analysis with histogram path
     """
-    # Fetch all posts with requests
-    response = requests.get(f"{BASE_URL}/posts", timeout=TIMEOUT)
-    response.raise_for_status()
-    posts = response.json()
+    # Fetch data
+    posts = fetch_all_posts()
     
     # Count by category
     category_counts = {}
@@ -162,7 +142,7 @@ def analyze_post_distribution() -> Dict[str, Any]:
         cat = post.get("category", "Uncategorized")
         category_counts[cat] = category_counts.get(cat, 0) + 1
     
-    # Create histogram with matplotlib
+    # Create histogram
     plt.figure(figsize=(10, 6))
     plt.bar(category_counts.keys(), category_counts.values(), color='purple', alpha=0.7)
     plt.xlabel('Category')
@@ -188,15 +168,12 @@ def analyze_engagement_trends() -> str:
     Returns:
         Path to scatter plot
     """
-    # Fetch posts with requests
-    response = requests.get(f"{BASE_URL}/posts", timeout=TIMEOUT)
-    response.raise_for_status()
-    posts = response.json()
-    
+    # Fetch data
+    posts = fetch_all_posts()
     views = [p.get("views", 0) for p in posts]
     likes = [p.get("likes", 0) for p in posts]
     
-    # Create scatter plot with matplotlib
+    # Create scatter plot
     plt.figure(figsize=(10, 6))
     plt.scatter(views, likes, alpha=0.6, s=100, color='darkblue')
     plt.xlabel('Views')
