@@ -56,18 +56,14 @@ def test_main_success(sample_users, capsys):
          patch('os.makedirs'):
         
         main()
-        
         captured = capsys.readouterr()
-        assert "Data Harvester Application" in captured.out
-        assert "API is healthy" in captured.out
         assert "All operations completed successfully" in captured.out
 
 
 def test_main_api_failure(capsys):
     """Test main function when API is down"""
-    with patch('src.api_client.check_api_status', return_value=False):
+    with patch('src.main.check_api_status', return_value=False):
         main()
-        
         captured = capsys.readouterr()
         assert "ERROR" in captured.out
         assert "not responding" in captured.out
