@@ -187,3 +187,17 @@ def analyze_engagement_trends() -> str:
     plt.close()
     
     return plot_path
+
+
+def calculate_average_post_length(posts: List[Dict[str, Any]]) -> float:
+    """
+    Calculate the average character length of post titles
+    
+    Args:
+        posts: List of post dictionaries containing 'title' field
+        
+    Returns:
+        Average title length as a float, or 0.0 if no posts provided
+    """
+    # TODO: Implement this function
+    pass

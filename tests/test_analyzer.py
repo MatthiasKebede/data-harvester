@@ -83,3 +83,9 @@ def test_analyze_engagement_trends(sample_posts):
         assert 'Views' in ax.get_xlabel()
         assert 'Likes' in ax.get_ylabel()
     plt.close('all')
+
+
+def test_calculate_average_post_length(sample_posts):
+    """Test calculating average post title length"""
+    # TODO: Implement this test
+    pass

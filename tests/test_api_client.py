@@ -54,10 +54,8 @@ def test_post_comment():
     """Test posting a new comment"""
     expected = {"id": "10", "post_id": "1", "author": "TestUser", "content": "Test comment"}
     
-    with patch('src.api_client.get_session') as mock_get_session:
-        mock_session = MagicMock()
-        mock_session.post.return_value = mock_response(expected)
-        mock_get_session.return_value = mock_session
+    with patch('requests.post') as mock_post:
+        mock_post.return_value = mock_response(expected)
 
         comment = post_comment("1", "TestUser", "Test comment")
         assert comment["post_id"] == "1"
