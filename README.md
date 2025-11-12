@@ -1,17 +1,17 @@
 # Data Harvester
-A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `matplotlib` for data visualization, with plans to migrate to `httpx` and `plotly` respectively. See [this report](./temp_report.md) for WIP migration details.
+A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `tablib` for data export to CSV, with plans to migrate to `httpx` and `pandas` respectively. See [this report](./temp_report.md) for WIP migration details.
 
 ## Features
 - Fetch data from multiple API endpoints using HTTP GET and POST requests
-- Analyze user engagement and post statistics with integrated visualizations
-- Generate dashboards combining data fetching, analysis, and visualization
+- Analyze user engagement and post statistics with CSV data exports
+- Generate dashboards combining data fetching, analysis, and export
 
 ## Project Structure
 ```
 src/
 ├── __init__.py
 ├── api_client.py        # API data collection
-├── analyzer.py          # Data analysis and visualization
+├── analyzer.py          # Data analysis and CSV exports
 ├── dashboard.py         # Dashboard generation
 └── main.py              # Main application orchestrator
 ```
@@ -20,7 +20,7 @@ src/
 1. Create a virtual environment and install dependencies:
    ```bash
    python -m venv .venv
-   source .venv/bin/activate
+   source .venv/bin/activate  # On Windows: .venv/Scripts/activate
    pip install -r requirements.txt
    ```
 
@@ -76,7 +76,13 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 
 6. **Reflection**:
    - After completing the task, take a moment to review the `analyzer.py` and `test_analyzer.py` files. Note how the code is structured and how tests are written to validate functionality.
+   - Make a Git commit before moving on (terminal or VS Code GUI)
+     ```bash
+     git add .
+     git commit -m "Warmup completed"
+     ```
 
 
 ## Migration Hints:
 - If you are having trouble with the test suite during/after a migration, carefully check the names of the mocked functions.
+  - Also, make sure that the test suite passes when `json-server` is NOT running.

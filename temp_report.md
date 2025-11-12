@@ -1,5 +1,5 @@
 # Migration for Data Harvester
-First migration is `requests` to `httpx`, second is now `matplotlib` to `plotly`.
+First migration is `requests` to `httpx`, second is now `tablib` to `pandas`.
 
 ## Callsites & Changes per Module
 ### API Client
@@ -13,22 +13,22 @@ First migration is `requests` to `httpx`, second is now `matplotlib` to `plotly`
     | many-to-one | 2 |
 
 ### Analyzer
-- `matplotlib` - 2 imports, 40 function calls
+- `tablib` - 1 import, X function calls
     | Cardinality | Count |
     |------------|-------------|
-    | one-to-zero | 3 |
-    | one-to-one (import) | 2 |
-    | one-to-one (func call) | 4 |
-    | many-to-one | 13 |
+    | one-to-zero | 6 |
+    | one-to-one (import) | 1 |
+    | one-to-one (func call) | 6 |
+    | many-to-one | 7 |
 
 ### Dashboard
-- `matplotlib` - 2 imports, 28 function calls
+- `tablib` - 1 import, X function calls
     | Cardinality | Count |
     |------------|-------------|
     | one-to-zero | 3 |
-    | one-to-one (import) | 2 |
-    | one-to-one (func call) | 5 |
-    | many-to-one | 11 |
+    | one-to-one (import) | 1 |
+    | one-to-one (func call) | 3 |
+    | many-to-one | 5 |
 
 
 ## Overall 

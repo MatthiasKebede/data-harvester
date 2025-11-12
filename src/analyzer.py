@@ -2,15 +2,11 @@
 Analyzer module that combines data fetching, processing, and storage
 """
 
-import csv
+import tablib
 import os
 import statistics
 from typing import Dict, Any, List
 from src.api_client import fetch_user, fetch_all_posts
-
-
-BASE_URL = "http://localhost:3000"
-TIMEOUT = 10
 
 
 def analyze_user_activity(user_id: str) -> Dict[str, Any]:
@@ -44,22 +40,27 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
         "avg_views": statistics.mean(views) if views else 0,
     }
     
-    # Export detailed post data to CSV
+    # Create data for export
+    dataset = tablib.Dataset()
+    dataset.headers = ['post_index', 'title', 'likes', 'views', 'category']
+    
+    for i, post in enumerate(posts):
+        dataset.append([
+            i,
+            post.get('title', f'Post {i}'),
+            post.get('likes', 0),
+            post.get('views', 0),
+            post.get('category', 'Uncategorized')
+        ])
+    
+    # Sort by likes (descending)
+    dataset = dataset.sort('likes', reverse=True)
+
+    csv_output = dataset.export('csv')
     csv_path = f'data/user_{user_id}_posts.csv'
     os.makedirs('data', exist_ok=True)
-    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['post_index', 'title', 'likes', 'views', 'category']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        writer.writeheader()
-        for i, post in enumerate(posts):
-            writer.writerow({
-                'post_index': i,
-                'title': post.get('title', f'Post {i}'),
-                'likes': post.get('likes', 0),
-                'views': post.get('views', 0),
-                'category': post.get('category', 'Uncategorized')
-            })
+    with open(csv_path, 'w', encoding='utf-8') as csvfile:
+        csvfile.write(csv_output)
     
     analysis['path'] = csv_path
     return analysis
@@ -81,19 +82,25 @@ def analyze_post_distribution() -> Dict[str, Any]:
         cat = post.get("category", "Uncategorized")
         category_counts[cat] = category_counts.get(cat, 0) + 1
     
-    # Export distribution data to CSV
+    # Create data for export
+    dataset = tablib.Dataset()
+    dataset.headers = ['category', 'post_count']
+    
+    for category, count in category_counts.items():
+        dataset.append([category, count])
+
+    # Filter to categories w/ more than 1 post
+    filtered_dataset = tablib.Dataset()
+    filtered_dataset.headers = dataset.headers
+    for row in dataset:
+        if row[1] > 1:
+            filtered_dataset.append(row)
+    export_dataset = filtered_dataset if len(filtered_dataset) > 0 else dataset
+    
     csv_path = 'data/category_distribution.csv'
     os.makedirs('data', exist_ok=True)
-    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['category', 'post_count']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        
-        writer.writeheader()
-        for category, count in category_counts.items():
-            writer.writerow({
-                'category': category,
-                'post_count': count
-            })
+    with open(csv_path, 'w', encoding='utf-8') as csvfile:
+        csvfile.write(export_dataset.export('csv'))
     
     return {
         "category_counts": category_counts,
@@ -111,26 +118,41 @@ def analyze_engagement_trends() -> str:
     # Fetch data
     posts = fetch_all_posts()
     
-    # Export engagement data to CSV
+    # Create data for export
+    dataset = tablib.Dataset()
+    dataset.headers = ['post_id', 'title', 'views', 'likes', 'engagement_ratio']
+    
+    for post in posts:
+        views = post.get("views", 0)
+        likes = post.get("likes", 0)
+        engagement_ratio = likes / views if views > 0 else 0
+        
+        dataset.append([
+            post.get('id', ''),
+            post.get('title', 'Untitled'),
+            views,
+            likes,
+            round(engagement_ratio, 4)
+        ])
+
+    # Add column for engagement level
+    categorized_dataset = tablib.Dataset()
+    categorized_dataset.headers = list(dataset.headers) + ['engagement_level']
+    
+    for row in dataset:
+        engagement_ratio = row[4]
+        if engagement_ratio >= 0.2:
+            level = 'High'
+        elif engagement_ratio >= 0.1:
+            level = 'Medium'
+        else:
+            level = 'Low'
+        categorized_dataset.append(list(row) + [level])
+    
     csv_path = 'data/engagement_trends.csv'
     os.makedirs('data', exist_ok=True)
-    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['post_id', 'title', 'views', 'likes', 'engagement_ratio']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        
-        writer.writeheader()
-        for post in posts:
-            views = post.get("views", 0)
-            likes = post.get("likes", 0)
-            engagement_ratio = likes / views if views > 0 else 0
-            
-            writer.writerow({
-                'post_id': post.get('id', ''),
-                'title': post.get('title', 'Untitled'),
-                'views': views,
-                'likes': likes,
-                'engagement_ratio': round(engagement_ratio, 4)
-            })
+    with open(csv_path, 'w', encoding='utf-8') as csvfile:
+        csvfile.write(categorized_dataset.export('csv'))
     
     return csv_path
 

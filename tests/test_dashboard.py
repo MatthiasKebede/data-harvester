@@ -40,6 +40,7 @@ def test_generate_overview_dashboard(sample_users, sample_posts):
             rows = list(reader)
             
             assert len(rows) == 3
+
             user_data = {row['user_id']: int(row['post_count']) for row in rows}
             assert user_data['1'] == 2
             assert user_data['2'] == 2
@@ -74,10 +75,15 @@ def test_generate_user_report(sample_user, sample_posts):
             
             assert len(rows) == 2
             assert 'category' in rows[0]
+
+            assert int(rows[0]['likes']) >= int(rows[1]['likes'])
+            assert rows[0]['title'] == 'Data Science Tips'
+            assert int(rows[0]['likes']) == 67
+            assert int(rows[0]['views']) == 312
                         
             likes_from_csv = [int(row['likes']) for row in rows]
             views_from_csv = [int(row['views']) for row in rows]
             expected_likes = [p["likes"] for p in user_posts]
             expected_views = [p["views"] for p in user_posts]
-            assert likes_from_csv == expected_likes
-            assert views_from_csv == expected_views
+            assert sorted(likes_from_csv) == sorted(expected_likes)
+            assert sorted(views_from_csv) == sorted(expected_views)
