@@ -2,87 +2,89 @@
 Tests for the analyzer module
 """
 
-import matplotlib.pyplot as plt
+import csv
+import os
 from unittest.mock import patch
 from src.analyzer import analyze_user_activity, analyze_post_distribution, analyze_engagement_trends
 
 
 def test_analyze_user_activity(sample_user, sample_posts):
-    """Test analyzing user activity with data fetching and plotting"""
-    user_posts = [p for p in sample_posts if p["user_id"] == "1"]
-    
+    """Test analyzing user activity with data fetching and plotting"""    
     with patch('src.analyzer.fetch_user') as mock_fetch_user, \
-         patch('src.analyzer.fetch_all_posts') as mock_fetch_posts, \
-         patch('matplotlib.pyplot.savefig'), \
-         patch('matplotlib.pyplot.close'):
+         patch('src.analyzer.fetch_all_posts') as mock_fetch_posts:
         
         mock_fetch_user.return_value = sample_user
         mock_fetch_posts.return_value = sample_posts
-        
+
         analysis = analyze_user_activity("1")
         
-        assert analysis["user_name"] == "Alice Johnson"
+        assert analysis["user"] == "Alice Johnson"
         assert analysis["total_posts"] == 2
-        assert "avg_likes" in analysis
-        assert len(analysis["plots"]) == 2
+        assert analysis["total_likes"] == 112
+        assert analysis["total_views"] == 542
 
-        ax = plt.gca()
-        lines = ax.get_lines()
-        assert len(lines) > 0, "No line plot found"
-
-        line_data = lines[0].get_ydata()
-        expected_views = [p['views'] for p in user_posts]
-        assert list(line_data) == expected_views
-        assert 'Views' in ax.get_ylabel()
-        assert 'Post Index' in ax.get_xlabel()
-    plt.close('all')
+        assert os.path.exists("data/user_1_posts.csv")
+        with open("data/user_1_posts.csv", 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 2
+            assert rows[0]['post_index'] == '0'
+            assert rows[0]['title'] == 'Getting Started with Python'
+            assert rows[0]['likes'] == '45'
+            assert rows[0]['views'] == '230'
+            assert rows[0]['category'] == 'Technology'
 
 
 def test_analyze_post_distribution(sample_posts):
     """Test analyzing post distribution by category"""
-    with patch('src.analyzer.fetch_all_posts') as mock_fetch_posts, \
-         patch('matplotlib.pyplot.savefig'), \
-         patch('matplotlib.pyplot.close'):
+    with patch('src.analyzer.fetch_all_posts') as mock_fetch_posts:
         
         mock_fetch_posts.return_value = sample_posts
-        
+
         analysis = analyze_post_distribution()
         
         assert "category_counts" in analysis
-        assert "plot" in analysis
-        assert "category_distribution.png" in analysis["plot"]
+        assert "path" in analysis
+        assert analysis["path"] == "data/category_distribution.csv"
+        
+        assert analysis["category_counts"]["Technology"] == 2
+        assert analysis["category_counts"]["Health"] == 2
+        assert analysis["category_counts"]["Education"] == 1
+        
+        assert os.path.exists("data/category_distribution.csv")
+        with open("data/category_distribution.csv", 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 3
+            category_data = {row['category']: int(row['post_count']) for row in rows}
+            assert category_data['Technology'] == 2
+            assert category_data['Health'] == 2
+            assert category_data['Education'] == 1
 
-        ax = plt.gca()
-        bars = ax.patches
-        assert len(bars) > 0, "No bars found in plot"
-        bar_heights = [int(bar.get_height()) for bar in bars]
-        expected_counts = list(analysis["category_counts"].values())
-
-        assert sorted(bar_heights) == sorted(expected_counts)
-        assert 'Category' in ax.get_xlabel()
-        assert 'Posts' in ax.get_ylabel()
-    plt.close('all')
 
 def test_analyze_engagement_trends(sample_posts):
     """Test that engagement scatter plot is created correctly"""
-    with patch('src.analyzer.fetch_all_posts') as mock_fetch_posts, \
-         patch('matplotlib.pyplot.savefig'), \
-         patch('matplotlib.pyplot.close'):
+    with patch('src.analyzer.fetch_all_posts') as mock_fetch_posts:
         
         mock_fetch_posts.return_value = sample_posts
-        
-        plot_path = analyze_engagement_trends()
-        assert plot_path == 'graphs/engagement_scatter.png'
-        
-        ax = plt.gca()
-        collections = ax.collections
-        assert len(collections) > 0, "No scatterplot found"
-        scatter_data = collections[0].get_offsets()
 
-        assert len(scatter_data) == len(sample_posts)
-        assert 'Views' in ax.get_xlabel()
-        assert 'Likes' in ax.get_ylabel()
-    plt.close('all')
+        csv_path = analyze_engagement_trends()
+        
+        assert csv_path == 'data/engagement_trends.csv'
+        assert os.path.exists(csv_path)
+        
+        with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 5
+            assert rows[0]['post_id'] == '1'
+            assert rows[0]['title'] == 'Getting Started with Python'
+            assert rows[0]['views'] == '230'
+            assert rows[0]['likes'] == '45'
+            assert float(rows[0]['engagement_ratio']) == 0.1957
 
 
 def test_calculate_average_post_length(sample_posts):

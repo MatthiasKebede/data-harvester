@@ -2,18 +2,16 @@
 Tests for the dashboard module
 """
 
-import matplotlib.pyplot as plt
+import csv
+import os
 from unittest.mock import patch
 from src.dashboard import generate_overview_dashboard, generate_user_report
 
 
 def test_generate_overview_dashboard(sample_users, sample_posts):
-    """Test generating overview dashboard with fetching and plotting"""
+    """Test generating overview dashboard with fetching and CSV export"""
     with patch('src.dashboard.fetch_all_users') as mock_fetch_all_users, \
-         patch('src.dashboard.fetch_all_posts') as mock_fetch_posts, \
-         patch('matplotlib.pyplot.savefig') as mock_savefig, \
-         patch('matplotlib.pyplot.close'), \
-         patch('os.makedirs'):
+         patch('src.dashboard.fetch_all_posts') as mock_fetch_posts:
         
         mock_fetch_all_users.return_value = sample_users
         mock_fetch_posts.return_value = sample_posts
@@ -22,14 +20,30 @@ def test_generate_overview_dashboard(sample_users, sample_posts):
         
         assert dashboard["total_users"] == 3
         assert dashboard["total_posts"] == 5
-        assert "overview_plot" in dashboard
-        assert "pie_plot" in dashboard
+        assert "overview_path" in dashboard
+        assert "dist_path" in dashboard
 
-        assert mock_savefig.call_count == 2
-        save_calls = [call[0][0] for call in mock_savefig.call_args_list]
-        assert 'reports/figures/overview.png' in save_calls
-        assert 'reports/figures/posts_distribution.png' in save_calls
-    plt.close('all')
+        assert os.path.exists(dashboard['overview_path'])
+        with open(dashboard['overview_path'], 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 3
+            metrics = {row['metric']: row['value'] for row in rows}
+            assert metrics['Total Users'] == '3'
+            assert metrics['Total Posts'] == '5'
+            assert float(metrics['Avg Posts/User']) == 1.67
+        
+        assert os.path.exists(dashboard['dist_path'])
+        with open(dashboard['dist_path'], 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 3
+            user_data = {row['user_id']: int(row['post_count']) for row in rows}
+            assert user_data['1'] == 2
+            assert user_data['2'] == 2
+            assert user_data['3'] == 1
 
 
 def test_generate_user_report(sample_user, sample_posts):
@@ -37,43 +51,33 @@ def test_generate_user_report(sample_user, sample_posts):
     user_posts = [p for p in sample_posts if p["user_id"] == "1"]
 
     with patch('src.dashboard.fetch_user') as mock_fetch_user, \
-         patch('src.dashboard.fetch_all_posts') as mock_fetch_posts, \
-         patch('matplotlib.pyplot.savefig'), \
-         patch('matplotlib.pyplot.close'), \
-         patch('os.makedirs'):
+         patch('src.analyzer.fetch_user') as mock_analyzer_user, \
+         patch('src.analyzer.fetch_all_posts') as mock_analyzer_posts:
         
         mock_fetch_user.return_value = sample_user
-        mock_fetch_posts.return_value = sample_posts
+        mock_analyzer_user.return_value = sample_user
+        mock_analyzer_posts.return_value = sample_posts
         
         report = generate_user_report("1")
         
+        assert "path" in report
         assert report["user"]["name"] == "Alice Johnson"
         assert report["post_count"] == 2
-        assert "engagement_plot" in report
+        assert report['path'] == 'data/user_1_posts.csv'
         assert report["total_likes"] == sum([p["likes"] for p in user_posts])
         assert report["total_views"] == sum([p["views"] for p in user_posts])
-
-        fig = plt.gcf()
-        axes = fig.get_axes()
-        assert len(axes) == 2, "Expected 2 subplots (likes and views)"
         
-        # Check first subplot (likes bar chart)
-        ax1 = axes[0]
-        bars = ax1.patches
-        assert len(bars) == 2, "Expected 2 bars for user's posts"
-        bar_heights = [int(bar.get_height()) for bar in bars]
-        expected_likes = [p["likes"] for p in user_posts]
-        assert bar_heights == expected_likes
-        assert 'Likes' in ax1.get_ylabel()
-        assert 'Post Index' in ax1.get_xlabel()
-        
-        # Check second subplot (views line chart)
-        ax2 = axes[1]
-        lines = ax2.get_lines()
-        assert len(lines) > 0, "No line plot found"
-        line_data = lines[0].get_ydata()
-        expected_views = [p["views"] for p in user_posts]
-        assert list(line_data) == expected_views
-        assert 'Views' in ax2.get_ylabel()
-        assert 'Post Index' in ax2.get_xlabel()
-    plt.close('all')
+        assert os.path.exists(report['path'])
+        with open(report['path'], 'r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = list(reader)
+            
+            assert len(rows) == 2
+            assert 'category' in rows[0]
+                        
+            likes_from_csv = [int(row['likes']) for row in rows]
+            views_from_csv = [int(row['views']) for row in rows]
+            expected_likes = [p["likes"] for p in user_posts]
+            expected_views = [p["views"] for p in user_posts]
+            assert likes_from_csv == expected_likes
+            assert views_from_csv == expected_views

@@ -7,7 +7,6 @@ import os
 from src.api_client import check_api_status, fetch_all_users
 from src.analyzer import (
     analyze_user_activity,
-    compare_users,
     analyze_post_distribution,
     analyze_engagement_trends
 )
@@ -34,9 +33,7 @@ def main():
     print("API is healthy")
     
     # Create necessary directories
-    os.makedirs("graphs", exist_ok=True)
-    os.makedirs("reports", exist_ok=True)
-    os.makedirs("reports/figures", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
     
     print("\nFetching users...")
     users = fetch_all_users()
@@ -52,21 +49,14 @@ def main():
         if "error" not in activity:
             print(f"Total posts: {activity['total_posts']}")
             print(f"Average likes: {activity['avg_likes']:.1f}")
-            print(f"Plots saved: {activity['plots']}")
-    
-    if len(users) >= 2:
-        print("\nComparing users...")
-        user_ids = [u["id"] for u in users[:2]]
-        comparison_plot = compare_users(user_ids)
-        print(f"Comparison plot saved: {comparison_plot}")
-    
+        
     print("\nAnalyzing post distribution...")
     distribution = analyze_post_distribution()
-    print(f"Distribution plot saved: {distribution['plot']}")
+    print(f"Distribution data saved: {distribution['path']}")
     
     print("\nAnalyzing engagement trends...")
-    trends_plot = analyze_engagement_trends()
-    print(f"Trends plot saved: {trends_plot}")
+    trends_csv = analyze_engagement_trends()
+    print(f"Trends data saved: {trends_csv}")
     
     print("\nGenerating overview dashboard...")
     dashboard = generate_overview_dashboard()
@@ -78,14 +68,14 @@ def main():
         user_report = generate_user_report(users[0]["id"])
         report_path = save_report_json(user_report, f"user_{users[0]['id']}_report.json")
         print(f"User report saved: {report_path}")
-        if "engagement_plot" in user_report:
-            print(f"Engagement plot: {user_report['engagement_plot']}")
+        if "path" in user_report:
+            print(f"Engagement data: {user_report['path']}")
     
     print("\nGenerating category report...")
     category_report = generate_category_report()
     report_path = save_report_json(category_report, "category_report.json")
     print(f"Category report saved: {report_path}")
-    print(f"Category plot: {category_report['plot']}")
+    print(f"Category data: {category_report['path']}")
     
     print("\n" + "=" * 50)
     print("All operations completed successfully!")

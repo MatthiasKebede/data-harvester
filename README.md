@@ -76,3 +76,7 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 
 6. **Reflection**:
    - After completing the task, take a moment to review the `analyzer.py` and `test_analyzer.py` files. Note how the code is structured and how tests are written to validate functionality.
+
+
+## Migration Hints:
+- If you are having trouble with the test suite during/after a migration, carefully check the names of the mocked functions.

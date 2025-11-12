@@ -2,14 +2,13 @@
 Dashboard module for generating comprehensive reports and visualizations
 """
 
-import matplotlib.pyplot as plt
-import matplotlib
+import csv
+import statistics
 from typing import Dict, Any
 import json
 import os
 from src.api_client import fetch_user, fetch_all_users, fetch_all_posts
 
-matplotlib.use('Agg')
 
 BASE_URL = "http://localhost:3000"
 TIMEOUT = 10
@@ -17,10 +16,10 @@ TIMEOUT = 10
 
 def generate_overview_dashboard() -> Dict[str, Any]:
     """
-    Generate a dashboard with overview statistics and visualizations
+    Generate a dashboard with overview statistics and data exports
     
     Returns:
-        Dashboard data with plot paths
+        Dashboard data with CSV file paths
     """
     # Fetch data
     users = fetch_all_users()
@@ -33,22 +32,19 @@ def generate_overview_dashboard() -> Dict[str, Any]:
         "avg_posts_per_user": len(posts) / len(users) if users else 0
     }
     
-    # Create overview bar chart
-    metrics = ['Users', 'Posts', 'Avg Posts/User']
-    values = [dashboard["total_users"], dashboard["total_posts"], dashboard["avg_posts_per_user"]]
+    # Export overview metrics to CSV
+    overview_csv = 'data/overview_metrics.csv'
+    os.makedirs('data', exist_ok=True)
+    with open(overview_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['metric', 'value']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        writer.writerow({'metric': 'Total Users', 'value': dashboard["total_users"]})
+        writer.writerow({'metric': 'Total Posts', 'value': dashboard["total_posts"]})
+        writer.writerow({'metric': 'Avg Posts/User', 'value': round(dashboard["avg_posts_per_user"], 2)})
     
-    plt.figure(figsize=(10, 6))
-    plt.bar(metrics, values, color=['steelblue', 'coral', 'lightgreen'])
-    plt.ylabel('Count')
-    plt.title('Platform Overview')
-    plt.tight_layout()
-    
-    overview_plot = 'reports/figures/overview.png'
-    os.makedirs('reports/figures', exist_ok=True)
-    plt.savefig(overview_plot)
-    plt.close()
-    
-    dashboard['overview_plot'] = overview_plot
+    dashboard['overview_path'] = overview_csv
     
     # Count posts per user
     user_post_counts = {}
@@ -56,22 +52,24 @@ def generate_overview_dashboard() -> Dict[str, Any]:
         uid = post.get("user_id", "unknown")
         user_post_counts[uid] = user_post_counts.get(uid, 0) + 1
     
-    # Create pie chart
-    plt.figure(figsize=(8, 8))
-    plt.pie(
-        user_post_counts.values(),
-        labels=[f"User {uid}" for uid in user_post_counts.keys()],
-        autopct='%1.1f%%',
-        startangle=90
-    )
-    plt.title('Post Distribution by User')
+    # Export post distribution to CSV
+    distribution_csv = 'data/posts_distribution.csv'
+    with open(distribution_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['user_id', 'post_count', 'percentage']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        total_posts = sum(user_post_counts.values())
+        for uid, count in user_post_counts.items():
+            percentage = (count / total_posts * 100) if total_posts > 0 else 0
+            writer.writerow({
+                'user_id': uid,
+                'post_count': count,
+                'percentage': round(percentage, 1)
+            })
     
-    pie_plot = 'reports/figures/posts_distribution.png'
-    plt.savefig(pie_plot)
-    plt.close()
-    
-    dashboard['pie_plot'] = pie_plot
-    
+    dashboard['dist_path'] = distribution_csv
+
     return dashboard
 
 
@@ -83,50 +81,25 @@ def generate_user_report(user_id: str) -> Dict[str, Any]:
         user_id: User identifier
         
     Returns:
-        User report with statistics and plots
+        User report with statistics and path to existing CSV file
     """
-    # Fetch data
-    user = fetch_user(user_id)
-    all_posts = fetch_all_posts()
-    posts = [p for p in all_posts if p.get("user_id") == user_id]
+    from src.analyzer import analyze_user_activity
+
+    # Get data from analysis
+    analysis = analyze_user_activity(user_id)
+    if "error" in analysis:
+        return {"user": fetch_user(user_id), "post_count": 0}
     
+    # Repackage the analysis results in report format
     report = {
-        "user": user,
-        "post_count": len(posts)
+        "user": fetch_user(user_id),
+        "post_count": analysis["total_posts"],
+        "path": analysis["path"],
+        "total_likes": analysis["total_likes"],
+        "total_views": analysis["total_views"],
+        "avg_likes": analysis["avg_likes"],
+        "avg_views": analysis["avg_views"]
     }
-    
-    if not posts:
-        return report
-    
-    # Extract engagement data
-    titles = [p["title"] for p in posts]
-    likes = [p.get("likes", 0) for p in posts]
-    views = [p.get("views", 0) for p in posts]
-    
-    # Create likes bar chart
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-    
-    ax1.bar(range(len(titles)), likes, color='steelblue')
-    ax1.set_xlabel('Post Index')
-    ax1.set_ylabel('Likes')
-    ax1.set_title(f'{user["name"]} - Likes')
-    
-    ax2.plot(range(len(titles)), views, marker='o', color='darkgreen', linewidth=2)
-    ax2.set_xlabel('Post Index')
-    ax2.set_ylabel('Views')
-    ax2.set_title(f'{user["name"]} - Views')
-    ax2.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    
-    plot_path = f'reports/figures/user_{user_id}_report.png'
-    os.makedirs('reports/figures', exist_ok=True)
-    plt.savefig(plot_path)
-    plt.close()
-    
-    report['engagement_plot'] = plot_path
-    report['total_likes'] = sum(likes)
-    report['total_views'] = sum(views)
     
     return report
 
@@ -136,7 +109,7 @@ def generate_category_report() -> Dict[str, Any]:
     Generate report analyzing posts by category
     
     Returns:
-        Category analysis report with plots
+        Category analysis report with CSV data
     """
     # Fetch data
     posts = fetch_all_posts()
@@ -153,38 +126,37 @@ def generate_category_report() -> Dict[str, Any]:
         category_data[cat]["count"] += 1
     
     # Calculate averages
-    categories = list(category_data.keys())
-    avg_likes = [sum(category_data[c]["likes"]) / len(category_data[c]["likes"]) 
-                 for c in categories]
-    avg_views = [sum(category_data[c]["views"]) / len(category_data[c]["views"]) 
-                 for c in categories]
+    category_stats = {}
+    for cat, data in category_data.items():
+        category_stats[cat] = {
+            "count": data["count"],
+            "avg_likes": statistics.mean(data["likes"]) if data["likes"] else 0,
+            "avg_views": statistics.mean(data["views"]) if data["views"] else 0,
+            "total_likes": sum(data["likes"]),
+            "total_views": sum(data["views"])
+        }
     
-    # Create grouped bar chart
-    x = range(len(categories))
-    width = 0.35
-    
-    plt.figure(figsize=(12, 6))
-    plt.bar([i - width/2 for i in x], avg_likes, width, label='Avg Likes', color='steelblue')
-    plt.bar([i + width/2 for i in x], avg_views, width, label='Avg Views', color='coral')
-    
-    plt.xlabel('Category')
-    plt.ylabel('Average Count')
-    plt.title('Category Performance')
-    plt.xticks(x, categories, rotation=45, ha='right')
-    plt.legend()
-    plt.tight_layout()
-    
-    plot_path = 'reports/figures/category_performance.png'
-    os.makedirs('reports/figures', exist_ok=True)
-    plt.savefig(plot_path)
-    plt.close()
+    # Export category performance to CSV
+    performance_csv = 'data/category_performance.csv'
+    os.makedirs('data', exist_ok=True)
+    with open(performance_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['category', 'post_count', 'avg_likes', 'avg_views', 'total_likes', 'total_views']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        for category, stats in category_stats.items():
+            writer.writerow({
+                'category': category,
+                'post_count': stats['count'],
+                'avg_likes': round(stats['avg_likes'], 2),
+                'avg_views': round(stats['avg_views'], 2),
+                'total_likes': stats['total_likes'],
+                'total_views': stats['total_views']
+            })
     
     report = {
-        "categories": {cat: {"count": data["count"],
-                            "avg_likes": sum(data["likes"]) / len(data["likes"]),
-                            "avg_views": sum(data["views"]) / len(data["views"])}
-                      for cat, data in category_data.items()},
-        "plot": plot_path
+        "categories": category_stats,
+        "path": performance_csv
     }
     
     return report
