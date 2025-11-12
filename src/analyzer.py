@@ -199,5 +199,9 @@ def calculate_average_post_length(posts: List[Dict[str, Any]]) -> float:
     Returns:
         Average title length as a float, or 0.0 if no posts provided
     """
-    # TODO: Implement this function
-    pass
+    titles = [p.get("title", "") for p in posts]
+    if titles:
+        total = sum([len(t) for t in titles])
+        ave = total/len(titles)
+        return ave
+    return 0.0

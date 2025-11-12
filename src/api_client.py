@@ -2,9 +2,8 @@
 API client module for fetching data from APIs
 """
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import httpx
+from httpx import HTTPTransport
 import json
 from typing import Dict, Any, List, Iterator
 
@@ -13,14 +12,12 @@ TIMEOUT = 3
 
 _session = None
 
-def get_session() -> requests.Session:
+def get_session() -> httpx.Client:
     """Get or create a shared session"""
     global _session
     if _session is None:
-        adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20)
-        _session = requests.Session()
-        _session.mount("http://", adapter)
-        _session.mount("https://", adapter)
+        limits = httpx.Limits(max_keepalive_connections=10, max_connections=20)
+        _session = httpx.Client(http2=True, limits=limits)
     return _session
 
 
@@ -47,11 +44,8 @@ def fetch_user(user_id: str) -> Dict[str, Any]:
     Returns:
         User data dictionary
     """
-    session = requests.Session()
-    retry_strategy = Retry(total=1, backoff_factor=1)
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
+    transport = HTTPTransport(http2=True, retries=1)
+    session = httpx.Client(transport=transport)
     
     try:
         response = session.get(f"{BASE_URL}/users/{user_id}", timeout=TIMEOUT)
@@ -68,7 +62,7 @@ def fetch_all_posts() -> List[Dict[str, Any]]:
     Returns:
         List of all post dictionaries
     """
-    response = requests.get(
+    response = httpx.get(
         f"{BASE_URL}/posts",
         headers = {
             "Accept": "application/json",
@@ -90,12 +84,12 @@ def fetch_comments(post_id: str) -> Iterator[Dict[str, Any]]:
     Returns:
         List of comment dictionaries
     """
-    response = requests.get(f"{BASE_URL}/posts/{post_id}/comments", stream=True)
+    response = httpx.stream("GET", f"{BASE_URL}/posts/{post_id}/comments")
     response.raise_for_status()
 
     # Accumulate chunks
     chunks = []
-    for chunk in response.iter_content(chunk_size=512):
+    for chunk in response.iter_bytes(chunk_size=512):
         if chunk:
             chunks.append(chunk)
 
@@ -118,7 +112,7 @@ def post_comment(post_id: str, author: str, content: str) -> Dict[str, Any]:
     Returns:
         Created comment data
     """
-    response = requests.post(
+    response = httpx.post(
         f"{BASE_URL}/comments",
         json={"post_id": post_id, "author": author, "content": content},
         headers={"Content-Type": "application/json; charset=utf-8"},
@@ -136,9 +130,9 @@ def check_api_status() -> bool:
         True if API is healthy, False otherwise
     """
     try:
-        response = requests.get(f"{BASE_URL}/users", timeout=5)
+        response = httpx.get(f"{BASE_URL}/users", timeout=5)
         return response.status_code == 200
-    except requests.exceptions.RequestException:
+    except httpx._exceptions.RequestError:
         return False
 
 def close_session():

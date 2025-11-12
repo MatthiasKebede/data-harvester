@@ -4,7 +4,7 @@ Tests for the analyzer module
 
 import matplotlib.pyplot as plt
 from unittest.mock import patch
-from src.analyzer import analyze_user_activity, analyze_post_distribution, analyze_engagement_trends
+from src.analyzer import analyze_user_activity, analyze_post_distribution, analyze_engagement_trends, calculate_average_post_length
 
 
 def test_analyze_user_activity(sample_user, sample_posts):
@@ -87,5 +87,5 @@ def test_analyze_engagement_trends(sample_posts):
 
 def test_calculate_average_post_length(sample_posts):
     """Test calculating average post title length"""
-    # TODO: Implement this test
-    pass
+    result = calculate_average_post_length(sample_posts)
+    assert result == 94/5
