@@ -17,6 +17,11 @@ src/
 ```
 
 ## Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/MatthiasKebede/data-harvester.git
+   ```
+
 1. Create a virtual environment and install dependencies:
    ```bash
    python -m venv .venv
@@ -29,7 +34,7 @@ src/
    python -m pytest
    ```
 
-3. Run the application directly (optional):
+3. Run the application directly (optional - you only need to use the tests):
    - Install and run `json-server`:
       ```bash
       npm install -g json-server
