@@ -56,6 +56,7 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
     # Sort by likes (descending)
     dataset = dataset.sort('likes', reverse=True)
 
+    # Export CSV file
     csv_output = dataset.export('csv')
     csv_path = f'data/user_{user_id}_posts.csv'
     os.makedirs('data', exist_ok=True)
@@ -97,6 +98,7 @@ def analyze_post_distribution() -> Dict[str, Any]:
             filtered_dataset.append(row)
     export_dataset = filtered_dataset if len(filtered_dataset) > 0 else dataset
     
+    # Export CSV file
     csv_path = 'data/category_distribution.csv'
     os.makedirs('data', exist_ok=True)
     with open(csv_path, 'w', encoding='utf-8') as csvfile:
@@ -149,6 +151,7 @@ def analyze_engagement_trends() -> str:
             level = 'Low'
         categorized_dataset.append(list(row) + [level])
     
+    # Export CSV file
     csv_path = 'data/engagement_trends.csv'
     os.makedirs('data', exist_ok=True)
     with open(csv_path, 'w', encoding='utf-8') as csvfile:

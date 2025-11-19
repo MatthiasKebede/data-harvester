@@ -1,10 +1,5 @@
 # Data Harvester
-A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `tablib` for data export to CSV, with plans to migrate to `httpx` and `pandas` respectively. See [this report](./temp_report.md) for WIP migration details.
-
-## Features
-- Fetch data from multiple API endpoints using HTTP GET and POST requests
-- Analyze user engagement and post statistics with CSV data exports
-- Generate dashboards combining data fetching, analysis, and export
+A Python application designed to fetch and process data from APIs. It currently uses the `requests` library for HTTP operations and `tablib` for data handling + export to CSV, with plans to migrate to `httpx` and `pandas` respectively.
 
 ## Project Structure
 ```
@@ -13,7 +8,7 @@ src/
 ├── api_client.py        # API data collection
 ├── analyzer.py          # Data analysis and CSV exports
 ├── dashboard.py         # Dashboard generation
-└── main.py              # Main application orchestrator
+└── main.py
 ```
 
 ## Setup
@@ -22,20 +17,20 @@ src/
    git clone https://github.com/MatthiasKebede/data-harvester.git
    ```
 
-1. Create a virtual environment and install dependencies:
+2. Create a virtual environment and install dependencies:
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv/Scripts/activate
    pip install -r requirements.txt
    ```
 
-2. Run tests:
+3. Run tests:
    ```bash
    python -m pytest
    ```
 
-3. Run the application directly (optional - you only need to use the tests):
-   - Install and run `json-server`:
+4. Run the application directly (optional - you only need to use the tests):
+   - Install and run `json-server` (in a new terminal window):
       ```bash
       npm install -g json-server
       json-server --watch db.json --port 3000
@@ -55,8 +50,8 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 ### Steps
 
 1. **Locate the Function Stub**:
-   - Open the `src/analyzer.py` file in your editor.
-   - Find the `calculate_average_post_length()` function and read the docstring to understand expected behavior.
+   - Open the `src/analyzer.py` file in your editor
+   - Find the `calculate_average_post_length()` function and read the docstring to understand expected behavior
 
 2. **Add the New Function**:
    - Implement the `calculate_average_post_length()` function, which should:
@@ -65,8 +60,8 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
      - Return `0.0` if the list is empty or no valid titles exist
 
 3. **Write a Test**:
-   - Open the `tests/test_analyzer.py` file.
-   - Find the `test_calculate_average_post_length()` test and read the docstring.
+   - Open the `tests/test_analyzer.py` file
+   - Find the `test_calculate_average_post_length()` test and read the docstring
    - Implement the test to verify the `calculate_average_post_length()` function
      - Use the `sample_posts` fixture from `conftest.py` as the argument used in the function
 
@@ -75,13 +70,11 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
      ```bash
      python -m pytest tests/test_analyzer.py::test_calculate_average_post_length -v
      ```
-
-5. **Verify the Output**:
    - Check that the test passes successfully. If not, review your code and make necessary adjustments.
 
-6. **Reflection**:
+5. **Reflection**:
    - After completing the task, take a moment to review the `analyzer.py` and `test_analyzer.py` files. Note how the code is structured and how tests are written to validate functionality.
-   - Make a Git commit before moving on (terminal or VS Code GUI)
+   - Make a Git commit before moving on
      ```bash
      git add .
      git commit -m "Warmup completed"
@@ -91,3 +84,17 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 ## Migration Hints:
 - If you are having trouble with the test suite during/after a migration, carefully check the names of the mocked functions.
   - Also, make sure that the test suite passes when `json-server` is NOT running.
+- For the `tablib` to `pandas` migration, switching from a `Dataset` to `DataFrame` often requires swapping the order of operations:
+  ```python
+  # tablib Dataset
+  dataset = tablib.Dataset()
+  dataset.headers = ['h1', 'h2']
+  dataset.append(['value1', 'value2'])
+  ```
+  ```python
+  # pandas DataFrame
+  data = {'h1': [], 'h2': []}
+  data['h1'].append('value1')
+  data['h2'].append('value2')
+  dataframe = pandas.DataFrame(data)
+  ```

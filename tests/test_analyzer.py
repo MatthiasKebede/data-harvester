@@ -101,5 +101,5 @@ def test_analyze_engagement_trends(sample_posts):
 
 def test_calculate_average_post_length(sample_posts):
     """Test calculating average post title length"""
-    # TODO: Implement this test
+    # TODO: Implement this test (Hint: the expected average is 18.8)
     pass

@@ -61,6 +61,7 @@ def generate_overview_dashboard() -> Dict[str, Any]:
             round(percentage, 1)
         ])
     
+    # Export CSV file
     distribution_csv = 'data/posts_distribution.csv'
     with open(distribution_csv, 'w', encoding='utf-8') as csvfile:
         csvfile.write(distribution_dataset.export('csv'))
@@ -146,7 +147,7 @@ def generate_category_report() -> Dict[str, Any]:
             stats['total_views']
         ])
     
-    # Export category performance to CSV
+    # Export CSV file
     performance_csv = 'data/category_performance.csv'
     os.makedirs('data', exist_ok=True)
     with open(performance_csv, 'w', encoding='utf-8') as csvfile:
