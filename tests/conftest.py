@@ -5,17 +5,7 @@ Shared test fixtures and configuration
 import pytest
 
 
-@pytest.fixture
-def sample_user():
-    """Sample user data for testing"""
-    return {
-        'id': '1',
-        'name': 'Alice Johnson',
-        'email': 'alice@example.com'
-    }
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sample_users():
     """Sample list of users for testing"""
     return [
@@ -25,7 +15,13 @@ def sample_users():
     ]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def sample_user(sample_users):
+    """Sample user data for testing"""
+    return sample_users[0]
+
+
+@pytest.fixture(scope="session")
 def sample_posts():
     """Sample posts data for testing"""
     return [
@@ -37,20 +33,13 @@ def sample_posts():
     ]
 
 
-@pytest.fixture
-def sample_post():
+@pytest.fixture(scope="session")
+def sample_post(sample_posts):
     """Sample single post for testing"""
-    return {
-        'id': '1',
-        'user_id': '1',
-        'title': 'Getting Started with Python',
-        'likes': 45,
-        'views': 230,
-        'category': 'Technology'
-    }
+    return sample_posts[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sample_comments():
     """Sample comments data for testing"""
     return [

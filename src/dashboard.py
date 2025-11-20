@@ -30,45 +30,84 @@ def generate_overview_dashboard() -> Dict[str, Any]:
     
     # Create data for overview metrics
     overview_dataset = tablib.Dataset()
-    overview_dataset.headers = ['metric', 'value']
-    overview_dataset.append(['Total Users', dashboard["total_users"]])
-    overview_dataset.append(['Total Posts', dashboard["total_posts"]])
-    overview_dataset.append(['Avg Posts/User', round(dashboard["avg_posts_per_user"], 2)])
+    overview_dataset.headers = ['metric', 'value', 'type']
+    overview_dataset.append(['Total Users', dashboard["total_users"], 'count'])
+    overview_dataset.append(['Total Posts', dashboard["total_posts"], 'count'])
+    overview_dataset.append(['Avg Posts/User', round(dashboard["avg_posts_per_user"], 2), 'average'])
+
+    # Select only metric and value columns for export
+    export_dataset = tablib.Dataset()
+    export_dataset.headers = ['metric', 'value']
+    for row in overview_dataset:
+        export_dataset.append([row[0], row[1]])
     
     overview_csv = 'data/overview_metrics.csv'
     os.makedirs('data', exist_ok=True)
     with open(overview_csv, 'w', encoding='utf-8') as csvfile:
-        csvfile.write(overview_dataset.export('csv'))
+        csvfile.write(export_dataset.export('csv'))
     
     dashboard['overview_path'] = overview_csv
     
-    # Count posts per user
-    user_post_counts = {}
+    return dashboard
+
+
+def generate_category_report() -> Dict[str, Any]:
+    """
+    Generate report analyzing posts by category
+    
+    Returns:
+        Category analysis report with CSV data
+    """
+    # Fetch data
+    posts = fetch_all_posts()
+    
+    # Aggregate by category
+    category_data = {}
     for post in posts:
-        uid = post.get("user_id", "unknown")
-        user_post_counts[uid] = user_post_counts.get(uid, 0) + 1
+        cat = post.get("category", "Uncategorized")
+        if cat not in category_data:
+            category_data[cat] = {"likes": [], "views": [], "post_count": 0}
+        
+        category_data[cat]["likes"].append(post.get("likes", 0))
+        category_data[cat]["views"].append(post.get("views", 0))
+        category_data[cat]["post_count"] += 1
     
-    # Create data for post distribution
-    distribution_dataset = tablib.Dataset()
-    distribution_dataset.headers = ['user_id', 'post_count', 'percentage']
+    # Calculate averages
+    performance_dataset = tablib.Dataset()
+    performance_dataset.headers = ['category', 'post_count', 'avg_likes', 'avg_views', 'total_likes', 'total_views']
     
-    total_posts = sum(user_post_counts.values())
-    for uid, count in user_post_counts.items():
-        percentage = (count / total_posts * 100) if total_posts > 0 else 0
-        distribution_dataset.append([
-            uid,
-            count,
-            round(percentage, 1)
+    category_stats = {}
+    for cat, data in category_data.items():
+        stats = {
+            "post_count": data["post_count"],
+            "avg_likes": statistics.mean(data["likes"]) if data["likes"] else 0,
+            "avg_views": statistics.mean(data["views"]) if data["views"] else 0,
+            "total_likes": sum(data["likes"]),
+            "total_views": sum(data["views"])
+        }
+        category_stats[cat] = stats
+
+        performance_dataset.append([
+            cat,
+            stats['post_count'],
+            round(stats['avg_likes'], 2),
+            round(stats['avg_views'], 2),
+            stats['total_likes'],
+            stats['total_views']
         ])
     
     # Export CSV file
-    distribution_csv = 'data/posts_distribution.csv'
-    with open(distribution_csv, 'w', encoding='utf-8') as csvfile:
-        csvfile.write(distribution_dataset.export('csv'))
+    performance_csv = 'data/category_performance.csv'
+    os.makedirs('data', exist_ok=True)
+    with open(performance_csv, 'w', encoding='utf-8') as csvfile:
+        csvfile.write(performance_dataset.export('csv'))
     
-    dashboard['dist_path'] = distribution_csv
-
-    return dashboard
+    report = {
+        "categories": category_stats,
+        "path": performance_csv
+    }
+    
+    return report
 
 
 def generate_user_report(user_id: str) -> Dict[str, Any]:
@@ -97,65 +136,6 @@ def generate_user_report(user_id: str) -> Dict[str, Any]:
         "total_views": analysis["total_views"],
         "avg_likes": analysis["avg_likes"],
         "avg_views": analysis["avg_views"]
-    }
-    
-    return report
-
-
-def generate_category_report() -> Dict[str, Any]:
-    """
-    Generate report analyzing posts by category
-    
-    Returns:
-        Category analysis report with CSV data
-    """
-    # Fetch data
-    posts = fetch_all_posts()
-    
-    # Aggregate by category
-    category_data = {}
-    for post in posts:
-        cat = post.get("category", "Uncategorized")
-        if cat not in category_data:
-            category_data[cat] = {"likes": [], "views": [], "count": 0}
-        
-        category_data[cat]["likes"].append(post.get("likes", 0))
-        category_data[cat]["views"].append(post.get("views", 0))
-        category_data[cat]["count"] += 1
-    
-    # Calculate averages and create dataset
-    performance_dataset = tablib.Dataset()
-    performance_dataset.headers = ['category', 'post_count', 'avg_likes', 'avg_views', 'total_likes', 'total_views']
-    
-    category_stats = {}
-    for cat, data in category_data.items():
-        stats = {
-            "count": data["count"],
-            "avg_likes": statistics.mean(data["likes"]) if data["likes"] else 0,
-            "avg_views": statistics.mean(data["views"]) if data["views"] else 0,
-            "total_likes": sum(data["likes"]),
-            "total_views": sum(data["views"])
-        }
-        category_stats[cat] = stats
-
-        performance_dataset.append([
-            cat,
-            stats['count'],
-            round(stats['avg_likes'], 2),
-            round(stats['avg_views'], 2),
-            stats['total_likes'],
-            stats['total_views']
-        ])
-    
-    # Export CSV file
-    performance_csv = 'data/category_performance.csv'
-    os.makedirs('data', exist_ok=True)
-    with open(performance_csv, 'w', encoding='utf-8') as csvfile:
-        csvfile.write(performance_dataset.export('csv'))
-    
-    report = {
-        "categories": category_stats,
-        "path": performance_csv
     }
     
     return report

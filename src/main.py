@@ -7,13 +7,12 @@ import os
 from src.api_client import check_api_status, fetch_all_users
 from src.analyzer import (
     analyze_user_activity,
-    analyze_post_distribution,
     analyze_engagement_trends
 )
 from src.dashboard import (
     generate_overview_dashboard,
-    generate_user_report,
     generate_category_report,
+    generate_user_report,
     save_report_json
 )
 
@@ -49,11 +48,7 @@ def main():
         if "error" not in activity:
             print(f"Total posts: {activity['total_posts']}")
             print(f"Average likes: {activity['avg_likes']:.1f}")
-        
-    print("\nAnalyzing post distribution...")
-    distribution = analyze_post_distribution()
-    print(f"Distribution data saved: {distribution['path']}")
-    
+            
     print("\nAnalyzing engagement trends...")
     trends_csv = analyze_engagement_trends()
     print(f"Trends data saved: {trends_csv}")

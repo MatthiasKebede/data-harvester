@@ -4,8 +4,9 @@ Tests for the dashboard module
 
 import csv
 import os
+import pytest
 from unittest.mock import patch
-from src.dashboard import generate_overview_dashboard, generate_user_report
+from src.dashboard import generate_overview_dashboard, generate_category_report, generate_user_report
 
 
 def test_generate_overview_dashboard(sample_users, sample_posts):
@@ -21,7 +22,6 @@ def test_generate_overview_dashboard(sample_users, sample_posts):
         assert dashboard["total_users"] == 3
         assert dashboard["total_posts"] == 5
         assert "overview_path" in dashboard
-        assert "dist_path" in dashboard
 
         assert os.path.exists(dashboard['overview_path'])
         with open(dashboard['overview_path'], 'r', encoding='utf-8') as csvfile:
@@ -30,21 +30,48 @@ def test_generate_overview_dashboard(sample_users, sample_posts):
             
             assert len(rows) == 3
             metrics = {row['metric']: row['value'] for row in rows}
-            assert metrics['Total Users'] == '3'
-            assert metrics['Total Posts'] == '5'
-            assert float(metrics['Avg Posts/User']) == 1.67
+            assert float(metrics['Total Users']) == pytest.approx(3)
+            assert float(metrics['Total Posts']) == pytest.approx(5)
+            assert float(metrics['Avg Posts/User']) == pytest.approx(1.67)
+
+
+def test_generate_category_report(sample_posts):
+    """Test generating category performance report with aggregation and CSV export"""
+    with patch('src.dashboard.fetch_all_posts') as mock_fetch_posts:
         
-        assert os.path.exists(dashboard['dist_path'])
-        with open(dashboard['dist_path'], 'r', encoding='utf-8') as csvfile:
+        mock_fetch_posts.return_value = sample_posts
+        
+        report = generate_category_report()
+        
+        assert "categories" in report
+        assert "path" in report
+        assert report["path"] == 'data/category_performance.csv'
+        
+        categories = report["categories"]
+        assert len(categories) == 3
+        assert "Technology" in categories
+        assert "Health" in categories
+        
+        tech = categories["Technology"]
+        assert tech["post_count"] == 2
+        assert tech["total_likes"] == 45 + 67
+        assert tech["total_views"] == 230 + 312
+        assert tech["avg_likes"] == 56
+        assert tech["avg_views"] == 271
+        
+        assert os.path.exists(report['path'])
+        with open(report['path'], 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             rows = list(reader)
             
             assert len(rows) == 3
-
-            user_data = {row['user_id']: int(row['post_count']) for row in rows}
-            assert user_data['1'] == 2
-            assert user_data['2'] == 2
-            assert user_data['3'] == 1
+            
+            tech_row = next(r for r in rows if r['category'] == 'Technology')
+            assert float(tech_row['post_count']) == pytest.approx(2)
+            assert float(tech_row['avg_likes']) == pytest.approx(56)
+            assert float(tech_row['avg_views']) == pytest.approx(271)
+            assert float(tech_row['total_likes']) == pytest.approx(112)
+            assert float(tech_row['total_views']) == pytest.approx(542)
 
 
 def test_generate_user_report(sample_user, sample_posts):
@@ -76,14 +103,14 @@ def test_generate_user_report(sample_user, sample_posts):
             assert len(rows) == 2
             assert 'category' in rows[0]
 
-            assert int(rows[0]['likes']) >= int(rows[1]['likes'])
+            assert float(rows[0]['likes']) >= float(rows[1]['likes'])
             assert rows[0]['title'] == 'Data Science Tips'
-            assert int(rows[0]['likes']) == 67
-            assert int(rows[0]['views']) == 312
+            assert float(rows[0]['likes']) == pytest.approx(67)
+            assert float(rows[0]['views']) == pytest.approx(312)
                         
-            likes_from_csv = [int(row['likes']) for row in rows]
-            views_from_csv = [int(row['views']) for row in rows]
-            expected_likes = [p["likes"] for p in user_posts]
-            expected_views = [p["views"] for p in user_posts]
+            likes_from_csv = [float(row['likes']) for row in rows]
+            views_from_csv = [float(row['views']) for row in rows]
+            expected_likes = [float(p["likes"]) for p in user_posts]
+            expected_views = [float(p["views"]) for p in user_posts]
             assert sorted(likes_from_csv) == sorted(expected_likes)
             assert sorted(views_from_csv) == sorted(expected_views)

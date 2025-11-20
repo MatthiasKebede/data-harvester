@@ -67,49 +67,6 @@ def analyze_user_activity(user_id: str) -> Dict[str, Any]:
     return analysis
 
 
-def analyze_post_distribution() -> Dict[str, Any]:
-    """
-    Analyze distribution of posts across categories
-    
-    Returns:
-        Distribution analysis with CSV file path
-    """
-    # Fetch data
-    posts = fetch_all_posts()
-    
-    # Count by category
-    category_counts = {}
-    for post in posts:
-        cat = post.get("category", "Uncategorized")
-        category_counts[cat] = category_counts.get(cat, 0) + 1
-    
-    # Create data for export
-    dataset = tablib.Dataset()
-    dataset.headers = ['category', 'post_count']
-    
-    for category, count in category_counts.items():
-        dataset.append([category, count])
-
-    # Filter to categories w/ more than 1 post
-    filtered_dataset = tablib.Dataset()
-    filtered_dataset.headers = dataset.headers
-    for row in dataset:
-        if row[1] > 1:
-            filtered_dataset.append(row)
-    export_dataset = filtered_dataset if len(filtered_dataset) > 0 else dataset
-    
-    # Export CSV file
-    csv_path = 'data/category_distribution.csv'
-    os.makedirs('data', exist_ok=True)
-    with open(csv_path, 'w', encoding='utf-8') as csvfile:
-        csvfile.write(export_dataset.export('csv'))
-    
-    return {
-        "category_counts": category_counts,
-        "path": csv_path
-    }
-
-
 def analyze_engagement_trends() -> str:
     """
     Analyze engagement trends across all posts
@@ -136,31 +93,17 @@ def analyze_engagement_trends() -> str:
             likes,
             round(engagement_ratio, 4)
         ])
-
-    # Add column for engagement level
-    categorized_dataset = tablib.Dataset()
-    categorized_dataset.headers = list(dataset.headers) + ['engagement_level']
-    
-    for row in dataset:
-        engagement_ratio = row[4]
-        if engagement_ratio >= 0.2:
-            level = 'High'
-        elif engagement_ratio >= 0.1:
-            level = 'Medium'
-        else:
-            level = 'Low'
-        categorized_dataset.append(list(row) + [level])
     
     # Export CSV file
     csv_path = 'data/engagement_trends.csv'
     os.makedirs('data', exist_ok=True)
     with open(csv_path, 'w', encoding='utf-8') as csvfile:
-        csvfile.write(categorized_dataset.export('csv'))
+        csvfile.write(dataset.export('csv'))
     
     return csv_path
 
 
-def calculate_average_post_length(posts: List[Dict[str, Any]]) -> float:
+def calculate_average_title_length(posts: List[Dict[str, Any]]) -> float:
     """
     Calculate the average character length of post titles
     

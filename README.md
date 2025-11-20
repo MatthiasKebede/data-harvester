@@ -26,7 +26,7 @@ src/
 
 3. Run tests:
    ```bash
-   python -m pytest
+   python -m pytest -v
    ```
 
 4. Run the application directly (optional - you only need to use the tests):
@@ -82,19 +82,24 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 
 
 ## Migration Hints:
-- If you are having trouble with the test suite during/after a migration, carefully check the names of the mocked functions.
-  - Also, make sure that the test suite passes when `json-server` is NOT running.
-- For the `tablib` to `pandas` migration, switching from a `Dataset` to `DataFrame` often requires swapping the order of operations:
+- Make sure to check the imports at the top of the module
+- You may have to migrate the tests that correspond to migrated functions
+- If you are having trouble with the test suite during/after a migration, carefully check the names of the mocked functions/values
+  - Also, make sure that the test suite passes when `json-server` is NOT running
+- For the `tablib` to `pandas` migration, switching from a `Dataset` to `DataFrame` often involves swapping the order of operations:
   ```python
-  # tablib Dataset
+  # tablib Dataset (build structure first)
   dataset = tablib.Dataset()
-  dataset.headers = ['h1', 'h2']
-  dataset.append(['value1', 'value2'])
+  dataset.headers = ['Name', 'Age']
+  dataset.append(["Alice", 25])
   ```
   ```python
-  # pandas DataFrame
-  data = {'h1': [], 'h2': []}
-  data['h1'].append('value1')
-  data['h2'].append('value2')
+  # pandas DataFrame (build data first)
+  data = [{'Name': 'Alice', 'Age': 25}, {'Name': 'Bob', 'Age': 20}]
   dataframe = pandas.DataFrame(data)
   ```
+- Helpful Links:
+  - https://requests.readthedocs.io/en/latest/
+  - https://www.python-httpx.org/compatibility/
+  - https://tablib.readthedocs.io/en/stable/
+  - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html
