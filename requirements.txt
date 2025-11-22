@@ -1,6 +1,6 @@
 pytest
 pytest-mock
 requests
-tablib
 httpx
+tablib
 pandas

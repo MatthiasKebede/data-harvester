@@ -68,7 +68,7 @@ You will add a new `calculate_average_post_length()` function to `analyzer.py` t
 4. **Run the Test**:
    - Use the following command to run the test and ensure your changes work as expected:
      ```bash
-     python -m pytest tests/test_analyzer.py::test_calculate_average_post_length -v
+     python -m pytest tests/test_analyzer.py::test_calculate_average_title_length -v
      ```
    - Check that the test passes successfully. If not, review your code and make necessary adjustments.
 
