@@ -45,24 +45,24 @@ src/
 This warmup task is designed to help you get familiar with the structure of the codebase and the process of adding new functionality and tests.
 
 ### Objective
-You will add a new `calculate_average_post_length()` function to `analyzer.py` that calculates the average character length of post titles, then write a test to verify its behavior.
+You will add a new `calculate_average_title_length()` function to `analyzer.py` that calculates the average character length of post titles, then write a test to verify its behavior.
 
 ### Steps
 
 1. **Locate the Function Stub**:
    - Open the `src/analyzer.py` file in your editor
-   - Find the `calculate_average_post_length()` function and read the docstring to understand expected behavior
+   - Find the `calculate_average_title_length()` function and read the docstring to understand expected behavior
 
 2. **Add the New Function**:
-   - Implement the `calculate_average_post_length()` function, which should:
+   - Implement the `calculate_average_title_length()` function, which should:
      - Accept a list of post dictionaries
      - Calculate the average length of the 'title' field across all posts
      - Return `0.0` if the list is empty or no valid titles exist
 
 3. **Write a Test**:
    - Open the `tests/test_analyzer.py` file
-   - Find the `test_calculate_average_post_length()` test and read the docstring
-   - Implement the test to verify the `calculate_average_post_length()` function
+   - Find the `test_calculate_average_title_length()` test and read the docstring
+   - Implement the test to verify the `calculate_average_title_length()` function
      - Use the `sample_posts` fixture from `conftest.py` as the argument used in the function
 
 4. **Run the Test**:
